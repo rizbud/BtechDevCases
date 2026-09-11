@@ -2,9 +2,13 @@ package transaction
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
+	"time"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -13,16 +17,18 @@ type TransactionRepository struct {
 }
 
 type Transaction struct {
-	ID         string  `json:"id"`
-	FromUserID string  `json:"from_user_id"`
-	ToUserID   string  `json:"to_user_id"`
-	Amount     float64 `json:"amount"`
-	CreatedAt  string  `json:"created_at"`
+	ID             string    `json:"id"`
+	SenderID       *string   `json:"sender_id,omitempty"`
+	SenderEmail    *string   `json:"sender_email,omitempty"`
+	RecipientID    string    `json:"recipient_id"`
+	RecipientEmail string    `json:"recipient_email"`
+	Amount         float64   `json:"amount"`
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 func (r *TransactionRepository) CreateTransaction(
 	ctx context.Context,
-	fromUserID string,
+	fromUserID *string,
 	toUserID string,
 	amount float64,
 ) (string, error) {
@@ -30,13 +36,18 @@ func (r *TransactionRepository) CreateTransaction(
 
 	err := r.DB.QueryRow(
 		ctx,
-		"INSERT INTO transactions (from_user_id, to_user_id, amount) VALUES ($1, $2, $3) RETURNING id",
+		`INSERT INTO transactions (from_user_id, to_user_id, amount) VALUES ($1, $2, $3) RETURNING id`,
 		fromUserID,
 		toUserID,
 		amount,
 	).Scan(&transactionID)
 
 	if err != nil {
+		// if fromUserID or toUserID does not exist, return a specific error
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+			return "", fmt.Errorf("User ID does not exist")
+		}
 		log.Printf("[TransactionRepository.CreateTransaction] Failed to create transaction: %v", err)
 		return "", fmt.Errorf("Failed to create transaction")
 	}
@@ -52,11 +63,13 @@ func (r *TransactionRepository) GetTransactionsByUserID(
 ) ([]Transaction, error) {
 	rows, err := r.DB.Query(
 		ctx,
-		`SELECT id, from_user_id, to_user_id, amount, created_at
-			FROM transactions
-			WHERE (from_user_id = $1 OR to_user_id = $1)
-			AND created_at BETWEEN $2 AND $3
-			ORDER BY created_at DESC`,
+		`SELECT t.id, COALESCE(fu.id::text, NULL), COALESCE(fu.email, NULL), tu.id::text, tu.email, t.amount, t.created_at
+			FROM transactions t
+			LEFT JOIN users fu ON t.from_user_id = fu.id
+			JOIN users tu ON t.to_user_id = tu.id
+			WHERE (t.from_user_id = $1 OR t.to_user_id = $1)
+			AND t.created_at BETWEEN $2 AND $3
+			ORDER BY t.created_at DESC`,
 		userID,
 		startDate,
 		endDate,
@@ -74,8 +87,10 @@ func (r *TransactionRepository) GetTransactionsByUserID(
 		var transaction Transaction
 		err := rows.Scan(
 			&transaction.ID,
-			&transaction.FromUserID,
-			&transaction.ToUserID,
+			&transaction.SenderID,
+			&transaction.SenderEmail,
+			&transaction.RecipientID,
+			&transaction.RecipientEmail,
 			&transaction.Amount,
 			&transaction.CreatedAt,
 		)
@@ -93,6 +108,47 @@ func (r *TransactionRepository) GetTransactionsByUserID(
 	}
 
 	return transactions, nil
+}
+
+func (r *TransactionRepository) GetTransactionByID(
+	ctx context.Context,
+	userID string,
+	transactionID string,
+) (Transaction, error) {
+	var transaction Transaction
+	err := r.DB.QueryRow(
+		ctx,
+		`SELECT t.id, COALESCE(fu.id::text, NULL), COALESCE(fu.email, NULL), tu.id::text, tu.email, t.amount, t.created_at
+			FROM transactions t
+			LEFT JOIN users fu ON t.from_user_id = fu.id
+			JOIN users tu ON t.to_user_id = tu.id
+			WHERE t.id = $1 AND (t.from_user_id = $2 OR t.to_user_id = $2)`,
+		transactionID,
+		userID,
+	).Scan(
+		&transaction.ID,
+		&transaction.SenderID,
+		&transaction.SenderEmail,
+		&transaction.RecipientID,
+		&transaction.RecipientEmail,
+		&transaction.Amount,
+		&transaction.CreatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return Transaction{}, fmt.Errorf("Transaction ID %s not found", transactionID)
+		}
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "22P02" {
+			// if uuid is invalid, return a specific error
+			return Transaction{}, fmt.Errorf("Transaction ID %s not found", transactionID)
+		}
+
+		log.Printf("[TransactionRepository.GetTransactionByID] Failed to get transaction: %v", err)
+		return Transaction{}, fmt.Errorf("Failed to get transaction with ID %s", transactionID)
+	}
+
+	return transaction, nil
 }
 
 func (r *TransactionRepository) GetUserBalance(ctx context.Context, userID string) (float64, error) {
