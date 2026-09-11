@@ -17,8 +17,13 @@ func JSON(w http.ResponseWriter, statusCode int, data any) {
 }
 
 func ErrorResponseJSON(w http.ResponseWriter, statusCode int, message string, err any) {
+	msg := message
+	if msg == "" {
+		msg = http.StatusText(statusCode)
+	}
+
 	JSON(w, statusCode, ErrorResponse{
-		Message: message,
+		Message: msg,
 		Error:   err,
 	})
 }

@@ -1,0 +1,17 @@
+name: btech-wallet
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: btech-wallet-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-btech_wallet_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - btech-wallet-db:/var/lib/postgresql/data
+
+volumes:
+  btech-wallet-db:
