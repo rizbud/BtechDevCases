@@ -10,6 +10,7 @@ import (
 	"btech-wallet/config"
 	"btech-wallet/server"
 	"btech-wallet/transaction"
+	"btech-wallet/user"
 
 	"github.com/joho/godotenv"
 )
@@ -48,9 +49,11 @@ func main() {
 
 	authHandler := auth.NewAuthHandler(pool, jwtManager)
 	transactionHandler := transaction.NewTransactionHandler(pool)
+	userHandler := user.NewUserHandler(pool)
 
 	authHandler.RegisterRoutes(mux)
 	transactionHandler.RegisterRoutes(mux)
+	userHandler.RegisterRoutes(mux)
 
 	log.Printf("Server is running on port %s", port)
 

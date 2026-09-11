@@ -19,7 +19,7 @@ type UserRepository struct {
 type User struct {
 	ID        string    `json:"id"`
 	Email     string    `json:"email"`
-	Password  string    `json:"password"`
+	Password  string    `json:"password,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -58,6 +58,26 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*Use
 		}
 		log.Printf("[UsersRepository.GetUserByEmail] Failed to get user by email: %v", err)
 		return nil, fmt.Errorf("Failed to get user by email %s", email)
+	}
+
+	return &user, nil
+}
+
+func (r *UserRepository) GetUserByID(ctx context.Context, userID string) (*User, error) {
+	var user User
+
+	err := r.DB.QueryRow(
+		ctx,
+		"SELECT id, email, password FROM users WHERE id = $1",
+		userID,
+	).Scan(&user.ID, &user.Email, &user.Password)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("User with ID %s not found", userID)
+		}
+		log.Printf("[UsersRepository.GetUserByID] Failed to get user by ID: %v", err)
+		return nil, fmt.Errorf("Failed to get user by ID %s", userID)
 	}
 
 	return &user, nil
