@@ -49,7 +49,7 @@ func (s *AuthService) validateRegisterRequest(email, password, confirmPassword s
 	validationErrors := s.validateLoginRequest(email, password)
 
 	if !s.validateConfirmPassword(password, confirmPassword) {
-		validationErrors["confirm_password"] = "Passwords do not match"
+		validationErrors["confirmPassword"] = "Passwords do not match"
 	}
 
 	return validationErrors
@@ -80,7 +80,7 @@ func (s *AuthService) login(ctx context.Context, email string, password string) 
 		return LoginResponse{}, fmt.Errorf("Email or password is incorrect")
 	}
 
-	jwt, err := s.JWTManager.Issue(user.ID)
+	jwt, err := s.JWTManager.Issue(user.ID, user.Email)
 	if err != nil {
 		log.Printf("[AuthService.login] Failed to issue JWT: %v", err)
 		return LoginResponse{}, err
@@ -88,6 +88,7 @@ func (s *AuthService) login(ctx context.Context, email string, password string) 
 
 	userData := LoginResponse{
 		ID:        user.ID,
+		Email:     user.Email,
 		AuthToken: jwt,
 	}
 

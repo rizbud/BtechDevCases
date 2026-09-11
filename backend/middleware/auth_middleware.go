@@ -45,7 +45,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		userID, ok := claims["id"].(string)
+		userID, ok := claims["user_id"].(string)
 		if !ok {
 			server.ErrorResponseJSON(w, http.StatusUnauthorized, "Invalid token", nil)
 			return

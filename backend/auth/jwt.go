@@ -13,7 +13,8 @@ type JWTManager struct {
 }
 
 type Claims struct {
-	ID string `json:"id"`
+	UserID string `json:"user_id"`
+	Email  string `json:"email"`
 	jwt.RegisteredClaims
 }
 
@@ -24,11 +25,12 @@ func NewJWTManager(secret string, ttl time.Duration) *JWTManager {
 	}
 }
 
-func (m *JWTManager) Issue(id string) (string, error) {
+func (m *JWTManager) Issue(id, email string) (string, error) {
 	now := time.Now()
 
 	claims := &Claims{
-		ID: id,
+		UserID: id,
+		Email:  email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        uuid.NewString(),
 			IssuedAt:  jwt.NewNumericDate(now),

@@ -17,11 +17,12 @@ type LoginRequest struct {
 type RegisterRequest struct {
 	Email           string `json:"email"`
 	Password        string `json:"password"`
-	ConfirmPassword string `json:"confirm_password"`
+	ConfirmPassword string `json:"confirmPassword"`
 }
 
 type LoginResponse struct {
 	ID        string `json:"id"`
+	Email     string `json:"email"`
 	AuthToken string `json:"auth_token"`
 }
 

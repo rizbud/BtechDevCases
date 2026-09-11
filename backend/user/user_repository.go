@@ -20,7 +20,7 @@ type User struct {
 	ID        string    `json:"id"`
 	Email     string    `json:"email"`
 	Password  string    `json:"password,omitempty"`
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
 }
 
 func (r *UserRepository) CreateUser(ctx context.Context, email string, password string) error {
