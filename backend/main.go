@@ -8,6 +8,7 @@ import (
 
 	"btech-wallet/auth"
 	"btech-wallet/config"
+	"btech-wallet/middleware"
 	"btech-wallet/server"
 	"btech-wallet/transaction"
 	"btech-wallet/user"
@@ -55,9 +56,11 @@ func main() {
 	transactionHandler.RegisterRoutes(mux)
 	userHandler.RegisterRoutes(mux)
 
+	wrappedMux := middleware.LoggingMiddleware(mux)
+
 	log.Printf("Server is running on port %s", port)
 
-	if err := http.ListenAndServe(":"+port, mux); err != nil && err != http.ErrServerClosed {
+	if err := http.ListenAndServe(":"+port, wrappedMux); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
