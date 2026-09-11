@@ -60,23 +60,48 @@ func (r *TransactionRepository) GetTransactionsByUserID(
 	userID string,
 	startDate string,
 	endDate string,
-) ([]Transaction, error) {
+	page int,
+	pageSize int,
+) ([]Transaction, int, error) {
+	totalRecords := 0
+	err := r.DB.QueryRow(
+		ctx,
+		`SELECT COUNT(*)
+			FROM transactions
+			WHERE (from_user_id = $1 OR to_user_id = $1) AND created_at BETWEEN $2 AND $3`,
+		userID,
+		startDate,
+		endDate,
+	).Scan(&totalRecords)
+	if err != nil {
+		log.Printf("[TransactionRepository.GetTransactionsByUserID] Failed to count transactions: %v", err)
+		return nil, 0, fmt.Errorf("Failed to get transactions for user %s", userID)
+	}
+
 	rows, err := r.DB.Query(
 		ctx,
-		`SELECT t.id, COALESCE(fu.id::text, NULL), COALESCE(fu.email, NULL), tu.id::text, tu.email, t.amount, t.created_at
+		`SELECT
+			t.id, COALESCE(fu.id::text, NULL), COALESCE(fu.email, NULL), tu.id::text, tu.email, t.amount, t.created_at
 			FROM transactions t
 			LEFT JOIN users fu ON t.from_user_id = fu.id
 			JOIN users tu ON t.to_user_id = tu.id
 			WHERE (t.from_user_id = $1 OR t.to_user_id = $1)
 			AND t.created_at BETWEEN $2 AND $3
-			ORDER BY t.created_at DESC`,
+			ORDER BY t.created_at DESC
+			OFFSET $4 LIMIT $5`,
 		userID,
 		startDate,
 		endDate,
+		(page-1)*pageSize,
+		pageSize,
 	)
 	if err != nil {
+		// if empty result, return empty slice and totalRecords as 0
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []Transaction{}, totalRecords, nil
+		}
 		log.Printf("[TransactionRepository.GetTransactionsByUserID] Failed to get transactions: %v", err)
-		return nil, fmt.Errorf("Failed to get transactions for user %s", userID)
+		return nil, 0, fmt.Errorf("Failed to get transactions for user %s", userID)
 	}
 
 	defer rows.Close()
@@ -96,7 +121,7 @@ func (r *TransactionRepository) GetTransactionsByUserID(
 		)
 		if err != nil {
 			log.Printf("[TransactionRepository.GetTransactionsByUserID] Failed to scan transaction: %v", err)
-			return nil, fmt.Errorf("Failed to get transactions for user %s", userID)
+			return nil, 0, fmt.Errorf("Failed to get transactions for user %s", userID)
 		}
 
 		transactions = append(transactions, transaction)
@@ -104,10 +129,10 @@ func (r *TransactionRepository) GetTransactionsByUserID(
 
 	if err = rows.Err(); err != nil {
 		log.Printf("[TransactionRepository.GetTransactionsByUserID] Rows error: %v", err)
-		return nil, fmt.Errorf("Failed to get transactions for user %s", userID)
+		return nil, 0, fmt.Errorf("Failed to get transactions for user %s", userID)
 	}
 
-	return transactions, nil
+	return transactions, totalRecords, nil
 }
 
 func (r *TransactionRepository) GetTransactionByID(

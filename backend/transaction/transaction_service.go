@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
+	"time"
 )
 
 type TransactionService struct {
@@ -103,6 +105,85 @@ func (s *TransactionService) topUp(ctx context.Context, userID string, amount fl
 	}
 
 	return transaction, nil
+}
+
+func (s *TransactionService) validateTransactionsRequest(
+	startDateStr,
+	endDateStr,
+	pageStr,
+	pageSizeStr string,
+) (map[string]string, int, int) {
+	validationErrors := map[string]string{}
+	if startDateStr == "" {
+		validationErrors["start_date"] = "Start date is required"
+	}
+	if endDateStr == "" {
+		validationErrors["end_date"] = "End date is required"
+	}
+
+	loc := time.Now().Location() // use local timezone for date parsing
+	startDate, err := time.ParseInLocation("2006-01-02", startDateStr, loc)
+	if err != nil {
+		validationErrors["start_date"] = "Invalid start date format. Use YYYY-MM-DD"
+	}
+
+	endDate, err := time.ParseInLocation("2006-01-02", endDateStr, loc)
+	if err != nil {
+		validationErrors["end_date"] = "Invalid end date format. Use YYYY-MM-DD"
+	}
+	if startDate.After(endDate) {
+		validationErrors["date_range"] = "Start date cannot be after end date"
+	}
+
+	// max date range of 1 year
+	if endDate.Sub(startDate).Hours() > 24*365 {
+		validationErrors["date_range"] = "Date range cannot exceed 1 year"
+	}
+
+	// end date cannot be in the future
+	if endDate.After(time.Now()) {
+		validationErrors["end_date"] = "End date cannot be in the future"
+	}
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		validationErrors["page"] = "Invalid page number"
+	}
+	pageSize, err := strconv.Atoi(pageSizeStr)
+	if err != nil {
+		validationErrors["page_size"] = "Invalid page size"
+	}
+
+	if page <= 0 {
+		validationErrors["page"] = "Page must be greater than zero"
+	}
+	if pageSize <= 0 {
+		validationErrors["page_size"] = "Page size must be greater than zero"
+	}
+
+	return validationErrors, page, pageSize
+}
+
+func (s *TransactionService) getTransactionsByUserID(
+	ctx context.Context,
+	userID,
+	startDate,
+	endDate string,
+	page,
+	pageSize int,
+) ([]Transaction, int, error) {
+	transactions, totalRecords, err := s.Repository.GetTransactionsByUserID(
+		ctx,
+		userID,
+		startDate,
+		endDate,
+		page,
+		pageSize,
+	)
+	if err != nil {
+		return nil, 0, err
+	}
+	return transactions, totalRecords, nil
 }
 
 func (s *TransactionService) getTransactionByID(ctx context.Context, userID, transactionID string) (Transaction, error) {

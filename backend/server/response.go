@@ -10,6 +10,14 @@ type ErrorResponse struct {
 	Error   any    `json:"error,omitempty"`
 }
 
+type PaginationResponse[T any] struct {
+	Data         []T `json:"data"`
+	TotalRecords int `json:"total_records"`
+	TotalPages   int `json:"total_pages"`
+	CurrentPage  int `json:"current_page"`
+	PageSize     int `json:"page_size"`
+}
+
 func JSON(w http.ResponseWriter, statusCode int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
@@ -25,5 +33,23 @@ func ErrorResponseJSON(w http.ResponseWriter, statusCode int, message string, er
 	JSON(w, statusCode, ErrorResponse{
 		Message: msg,
 		Error:   err,
+	})
+}
+
+func PaginationResponseJSON[T any](
+	w http.ResponseWriter,
+	statusCode int,
+	data []T,
+	totalRecords,
+	totalPages,
+	currentPage,
+	pageSize int,
+) {
+	JSON(w, statusCode, PaginationResponse[T]{
+		Data:         data,
+		TotalRecords: totalRecords,
+		TotalPages:   totalPages,
+		CurrentPage:  currentPage,
+		PageSize:     pageSize,
 	})
 }

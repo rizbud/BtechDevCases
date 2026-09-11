@@ -127,6 +127,53 @@ func (h *TransactionHandler) handleTopUp(w http.ResponseWriter, r *http.Request)
 	server.JSON(w, http.StatusOK, response)
 }
 
+func (h *TransactionHandler) handleGetTransactions(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("user_id").(string)
+	startDate := r.URL.Query().Get("start_date")
+	endDate := r.URL.Query().Get("end_date")
+	pageStr := r.URL.Query().Get("page")
+	if pageStr == "" {
+		pageStr = "1"
+	}
+	pageSizeStr := r.URL.Query().Get("page_size")
+	if pageSizeStr == "" {
+		pageSizeStr = "10"
+	}
+
+	validationErrors, page, pageSize := h.TrxService.validateTransactionsRequest(
+		startDate,
+		endDate,
+		pageStr,
+		pageSizeStr,
+	)
+	if len(validationErrors) > 0 {
+		server.ErrorResponseJSON(w, http.StatusBadRequest, "Validation errors", validationErrors)
+		return
+	}
+
+	transactions, totalRecords, err := h.TrxService.getTransactionsByUserID(
+		r.Context(),
+		userID,
+		startDate,
+		endDate,
+		page,
+		pageSize,
+	)
+	if err != nil {
+		server.ErrorResponseJSON(w, http.StatusInternalServerError, "Failed to get transactions", err)
+		return
+	}
+
+	response := server.PaginationResponse[Transaction]{
+		Data:         transactions,
+		TotalRecords: totalRecords,
+		TotalPages:   (totalRecords + pageSize - 1) / pageSize,
+		CurrentPage:  page,
+		PageSize:     pageSize,
+	}
+	server.JSON(w, http.StatusOK, response)
+}
+
 func (h *TransactionHandler) handleGetTransaction(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("user_id").(string)
 	transactionID := r.PathValue("transactionId")
@@ -150,6 +197,10 @@ func (h *TransactionHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("GET /wallet/balance", middleware.AuthMiddleware(http.HandlerFunc(h.handleGetUserBalance)))
 	mux.Handle("POST /wallet/transfer", middleware.AuthMiddleware(http.HandlerFunc(h.handleTransfer)))
 	mux.Handle("POST /wallet/topup", middleware.AuthMiddleware(http.HandlerFunc(h.handleTopUp)))
+	mux.Handle(
+		"GET /wallet/transactions",
+		middleware.AuthMiddleware(http.HandlerFunc(h.handleGetTransactions)),
+	)
 	mux.Handle(
 		"GET /wallet/transaction/{transactionId}",
 		middleware.AuthMiddleware(http.HandlerFunc(h.handleGetTransaction)),
