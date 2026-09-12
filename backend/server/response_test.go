@@ -52,7 +52,7 @@ func TestErrorResponseJSON(t *testing.T) {
 
 func TestPaginationResponseJSON(t *testing.T) {
 	w := httptest.NewRecorder()
-	PaginationResponseJSON(w, 200, []string{"a", "b"}, 2, 1, 1, 10)
+	PaginationResponseJSON(w, 200, "hi", []string{"a", "b"}, 2, 1, 1, 10)
 
 	var body PaginationResponse[string]
 	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
@@ -65,7 +65,7 @@ func TestPaginationResponseJSON(t *testing.T) {
 
 func TestPaginationResponseJSONNilData(t *testing.T) {
 	w := httptest.NewRecorder()
-	PaginationResponseJSON[string](w, 200, nil, 0, 0, 1, 10)
+	PaginationResponseJSON[string](w, 200, "", nil, 0, 0, 1, 10)
 
 	var body PaginationResponse[string]
 	json.Unmarshal(w.Body.Bytes(), &body)

@@ -26,7 +26,9 @@ func newTestTransactionHandler() *TransactionHandler {
 
 func newRequestWithUser(method, target, body string) *http.Request {
 	r := httptest.NewRequest(method, target, strings.NewReader(body))
-	return r.WithContext(context.WithValue(r.Context(), "user_id", "user-1"))
+	ctx := context.WithValue(r.Context(), "user_id", "user-1")
+	ctx = context.WithValue(ctx, "email", "user-1@example.com")
+	return r.WithContext(ctx)
 }
 
 func decodeErrors(t *testing.T, w *httptest.ResponseRecorder) map[string]any {

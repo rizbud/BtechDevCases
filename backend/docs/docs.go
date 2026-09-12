@@ -169,7 +169,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/btech-wallet_user.User"
+                            "$ref": "#/definitions/user.ProfileResponse"
                         }
                     },
                     "401": {
@@ -243,7 +243,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/transaction.Transaction"
+                            "$ref": "#/definitions/transaction.TransactionResponse"
                         }
                     },
                     "400": {
@@ -288,7 +288,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/transaction.Transaction"
+                            "$ref": "#/definitions/transaction.TransactionResponse"
                         }
                     },
                     "401": {
@@ -404,7 +404,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/transaction.Transaction"
+                            "$ref": "#/definitions/transaction.TransactionResponse"
                         }
                     },
                     "400": {
@@ -485,20 +485,6 @@ const docTemplate = `{
                 }
             }
         },
-        "btech-wallet_user.User": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                }
-            }
-        },
         "server.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -528,6 +514,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/transaction.Transaction"
                     }
                 },
+                "message": {
+                    "type": "string"
+                },
                 "page_size": {
                     "type": "integer"
                 },
@@ -544,6 +533,9 @@ const docTemplate = `{
             "properties": {
                 "balance": {
                     "type": "number"
+                },
+                "message": {
+                    "type": "string"
                 }
             }
         },
@@ -581,6 +573,35 @@ const docTemplate = `{
                 }
             }
         },
+        "transaction.TransactionResponse": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "recipient_email": {
+                    "type": "string"
+                },
+                "recipient_id": {
+                    "type": "string"
+                },
+                "sender_email": {
+                    "type": "string"
+                },
+                "sender_id": {
+                    "type": "string"
+                }
+            }
+        },
         "transaction.TransferRequest": {
             "type": "object",
             "properties": {
@@ -588,6 +609,23 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "to_user_email": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.ProfileResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "message": {
                     "type": "string"
                 }
             }

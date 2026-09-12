@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -15,11 +16,16 @@ type MessageResponse struct {
 }
 
 type PaginationResponse[T any] struct {
-	Data         []T `json:"data"`
-	TotalRecords int `json:"total_records"`
-	TotalPages   int `json:"total_pages"`
-	CurrentPage  int `json:"current_page"`
-	PageSize     int `json:"page_size"`
+	Message      string `json:"message,omitempty"`
+	Data         []T    `json:"data"`
+	TotalRecords int    `json:"total_records"`
+	TotalPages   int    `json:"total_pages"`
+	CurrentPage  int    `json:"current_page"`
+	PageSize     int    `json:"page_size"`
+}
+
+func WelcomeMessage(email string) string {
+	return fmt.Sprintf("Hello %s, welcome back", email)
 }
 
 func JSON(w http.ResponseWriter, statusCode int, data any) {
@@ -43,6 +49,7 @@ func ErrorResponseJSON(w http.ResponseWriter, statusCode int, message string, er
 func PaginationResponseJSON[T any](
 	w http.ResponseWriter,
 	statusCode int,
+	message string,
 	data []T,
 	totalRecords,
 	totalPages,
@@ -53,6 +60,7 @@ func PaginationResponseJSON[T any](
 		data = []T{}
 	}
 	JSON(w, statusCode, PaginationResponse[T]{
+		Message:      message,
 		Data:         data,
 		TotalRecords: totalRecords,
 		TotalPages:   totalPages,

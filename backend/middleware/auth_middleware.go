@@ -51,7 +51,14 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		email, ok := claims["email"].(string)
+		if !ok {
+			server.ErrorResponseJSON(w, http.StatusUnauthorized, "Invalid token", nil)
+			return
+		}
+
 		ctx := context.WithValue(r.Context(), "user_id", userID)
+		ctx = context.WithValue(ctx, "email", email)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

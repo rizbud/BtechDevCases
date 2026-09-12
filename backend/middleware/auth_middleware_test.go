@@ -156,17 +156,42 @@ func TestAuthMiddleware_MissingUserIDClaim(t *testing.T) {
 	}
 }
 
+func TestAuthMiddleware_MissingEmailClaim(t *testing.T) {
+	withJWTSecret(t, "test-secret")
+
+	token := signToken(t, "test-secret", jwt.MapClaims{
+		"user_id": "user-1",
+		"exp":     time.Now().Add(time.Hour).Unix(),
+	})
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("next handler should not be called")
+	})
+
+	r := httptest.NewRequest(http.MethodGet, "/profile", nil)
+	r.Header.Set("Authorization", "Bearer "+token)
+	w := httptest.NewRecorder()
+
+	AuthMiddleware(next).ServeHTTP(w, r)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusUnauthorized)
+	}
+}
+
 func TestAuthMiddleware_ValidToken(t *testing.T) {
 	withJWTSecret(t, "test-secret")
 
 	token := signToken(t, "test-secret", jwt.MapClaims{
 		"user_id": "user-42",
+		"email":   "user-42@example.com",
 		"exp":     time.Now().Add(time.Hour).Unix(),
 	})
 
-	var gotUserID any
+	var gotUserID, gotEmail any
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotUserID = r.Context().Value("user_id")
+		gotEmail = r.Context().Value("email")
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -181,5 +206,8 @@ func TestAuthMiddleware_ValidToken(t *testing.T) {
 	}
 	if gotUserID != "user-42" {
 		t.Errorf("context user_id = %v, want %q", gotUserID, "user-42")
+	}
+	if gotEmail != "user-42@example.com" {
+		t.Errorf("context email = %v, want %q", gotEmail, "user-42@example.com")
 	}
 }

@@ -39,15 +39,6 @@ definitions:
       password:
         type: string
     type: object
-  btech-wallet_user.User:
-    properties:
-      created_at:
-        type: string
-      email:
-        type: string
-      id:
-        type: string
-    type: object
   server.ErrorResponse:
     properties:
       error: {}
@@ -67,6 +58,8 @@ definitions:
         items:
           $ref: '#/definitions/transaction.Transaction'
         type: array
+      message:
+        type: string
       page_size:
         type: integer
       total_pages:
@@ -78,6 +71,8 @@ definitions:
     properties:
       balance:
         type: number
+      message:
+        type: string
     type: object
   transaction.TopUpRequest:
     properties:
@@ -101,11 +96,41 @@ definitions:
       sender_id:
         type: string
     type: object
+  transaction.TransactionResponse:
+    properties:
+      amount:
+        type: number
+      created_at:
+        type: string
+      id:
+        type: string
+      message:
+        type: string
+      recipient_email:
+        type: string
+      recipient_id:
+        type: string
+      sender_email:
+        type: string
+      sender_id:
+        type: string
+    type: object
   transaction.TransferRequest:
     properties:
       amount:
         type: number
       to_user_email:
+        type: string
+    type: object
+  user.ProfileResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      message:
         type: string
     type: object
 host: localhost:3333
@@ -211,7 +236,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/btech-wallet_user.User'
+            $ref: '#/definitions/user.ProfileResponse'
         "401":
           description: Unauthorized
           schema:
@@ -256,7 +281,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/transaction.Transaction'
+            $ref: '#/definitions/transaction.TransactionResponse'
         "400":
           description: Bad Request
           schema:
@@ -284,7 +309,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/transaction.Transaction'
+            $ref: '#/definitions/transaction.TransactionResponse'
         "401":
           description: Unauthorized
           schema:
@@ -358,7 +383,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/transaction.Transaction'
+            $ref: '#/definitions/transaction.TransactionResponse'
         "400":
           description: Bad Request
           schema:

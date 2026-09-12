@@ -12,6 +12,11 @@ type UserHandler struct {
 	Service *UserService
 }
 
+type ProfileResponse struct {
+	User
+	Message string `json:"message"`
+}
+
 func NewUserHandler(pool *pgxpool.Pool) *UserHandler {
 	repository := &UserRepository{
 		DB: pool,
@@ -29,11 +34,12 @@ func NewUserHandler(pool *pgxpool.Pool) *UserHandler {
 // @Tags profile
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} User
+// @Success 200 {object} ProfileResponse
 // @Failure 401 {object} server.ErrorResponse
 // @Router /profile [get]
 func (h *UserHandler) handleGetProfile(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("user_id").(string)
+	email := r.Context().Value("email").(string)
 
 	response, err := h.Service.GetUserByID(r.Context(), userID)
 	if err != nil {
@@ -45,7 +51,7 @@ func (h *UserHandler) handleGetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	server.JSON(w, http.StatusOK, response)
+	server.JSON(w, http.StatusOK, ProfileResponse{User: *response, Message: server.WelcomeMessage(email)})
 }
 
 func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
