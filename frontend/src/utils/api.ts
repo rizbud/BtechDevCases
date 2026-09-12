@@ -41,7 +41,19 @@ api.interceptors.response.use(
   },
 );
 
-const refreshTokenApi = async () => {
+let refreshPromise: Promise<string> | null = null;
+
+const refreshTokenApi = () => {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+  refreshPromise = doRefreshTokenApi().finally(() => {
+    refreshPromise = null;
+  });
+  return refreshPromise;
+};
+
+const doRefreshTokenApi = async () => {
   const refreshToken = localStorage.getItem("refreshToken");
   if (refreshToken) {
     try {
