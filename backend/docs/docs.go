@@ -455,7 +455,7 @@ const docTemplate = `{
         "auth.RefreshTokenRequest": {
             "type": "object",
             "properties": {
-                "token": {
+                "refresh_token": {
                     "type": "string"
                 }
             }
@@ -608,7 +608,7 @@ const docTemplate = `{
                 "amount": {
                     "type": "number"
                 },
-                "to_user_email": {
+                "recipient": {
                     "type": "string"
                 }
             }

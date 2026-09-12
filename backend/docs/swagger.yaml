@@ -20,7 +20,7 @@ definitions:
     type: object
   auth.RefreshTokenRequest:
     properties:
-      token:
+      refresh_token:
         type: string
     type: object
   auth.RefreshTokenResponse:
@@ -119,7 +119,7 @@ definitions:
     properties:
       amount:
         type: number
-      to_user_email:
+      recipient:
         type: string
     type: object
   user.ProfileResponse:

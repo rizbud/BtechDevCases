@@ -28,7 +28,7 @@ type LoginResponse struct {
 }
 
 type RefreshTokenRequest struct {
-	Token string `json:"token"`
+	Token string `json:"refresh_token"`
 }
 
 type RefreshTokenResponse struct {
@@ -145,7 +145,7 @@ func (h *AuthHandler) handleRefreshToken(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if req.Token == "" {
-		validationErrors := map[string]string{"token": "Refresh token is required"}
+		validationErrors := map[string]string{"refresh_token": "Refresh token is required"}
 		server.ErrorResponseJSON(w, http.StatusBadRequest, "Validation errors", validationErrors)
 		return
 	}

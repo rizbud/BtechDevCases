@@ -107,7 +107,7 @@ func TestHandleRefreshToken_InvalidBody(t *testing.T) {
 
 func TestHandleRefreshToken_MissingToken(t *testing.T) {
 	h := newTestAuthHandler()
-	r := httptest.NewRequest(http.MethodPost, "/auth/refresh-token", strings.NewReader(`{"token":""}`))
+	r := httptest.NewRequest(http.MethodPost, "/auth/refresh-token", strings.NewReader(`{"refresh_token":""}`))
 	w := httptest.NewRecorder()
 
 	h.handleRefreshToken(w, r)
@@ -116,7 +116,7 @@ func TestHandleRefreshToken_MissingToken(t *testing.T) {
 		t.Fatalf("status = %d, want %d", w.Code, http.StatusBadRequest)
 	}
 	errs := decodeValidationErrors(t, w)
-	if _, ok := errs["token"]; !ok {
-		t.Error("expected token validation error")
+	if _, ok := errs["refresh_token"]; !ok {
+		t.Error("expected refresh_token validation error")
 	}
 }

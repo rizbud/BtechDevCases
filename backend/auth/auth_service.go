@@ -140,7 +140,7 @@ func (s *AuthService) refreshToken(ctx context.Context, token string) (RefreshTo
 		return RefreshTokenResponse{}, err
 	}
 
-	newAuthToken, err := s.JWTManager.Issue(fmt.Sprintf("%d", userID), *userEmail)
+	newAuthToken, err := s.JWTManager.Issue(*userID, *userEmail)
 	if err != nil {
 		log.Printf("[AuthService.refreshToken] Failed to issue new JWT: %v", err)
 		return RefreshTokenResponse{}, err
