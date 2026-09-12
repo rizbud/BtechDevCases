@@ -18,8 +18,13 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response && error.response.status === 401) {
-      const originalRequest = error.config;
+    const originalRequest = error.config;
+    const url = originalRequest.url || "";
+    if (
+      error.response &&
+      error.response.status === 401 &&
+      !url.includes("/auth/")
+    ) {
       if (!originalRequest._retry) {
         originalRequest._retry = true;
         try {
