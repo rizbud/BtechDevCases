@@ -62,7 +62,7 @@ func main() {
 
 	mux.Handle("GET /swagger/", httpSwagger.WrapHandler)
 
-	jwtManager := auth.NewJWTManager(JWTSecret, 3600*time.Second) // 3600 seconds = 1 hour
+	jwtManager := auth.NewJWTManager(JWTSecret, 15*time.Minute)
 
 	authHandler := auth.NewAuthHandler(pool, jwtManager)
 	transactionHandler := transaction.NewTransactionHandler(pool)
