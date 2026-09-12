@@ -85,6 +85,7 @@ This keeps the scope tight: just registration, login, and a protected “Hello [
 - [x] Registration validation
 - [x] Protected route uses JWT auth
 - [x] Transfer funds works end-to-end
+- [x] Frontend resilient to slow/unstable connections
 - [x] Docker (bonus)
 - [x] Go backend (bonus)
 - [x] React frontend (bonus)
@@ -106,9 +107,9 @@ backend/
 frontend/
   src/auth/      login/register pages, forms, idle-logout hook
   src/wallet/    balance card, transfer/top-up modals, transaction table
-  src/components/  shared UI (pagination, etc.)
+  src/components/  shared UI components
   src/routes/    TanStack Router routes
-  src/utils/     axios instance with auth interceptor/refresh flow
+  src/utils/     axios instance with auth interceptor/refresh flow, React Query client
 ```
 
 ## Run with Docker
