@@ -174,6 +174,8 @@ Full interactive spec at `/swagger/index.html` (see [Run with Docker](#run-with-
 | GET    | `/wallet/transactions`     | JWT  | Paginated transaction history                 |
 | GET    | `/wallet/transaction/{id}` | JWT  | Single transaction detail                     |
 
+All routes are rate limited to 60 requests/min, with a stricter 10 requests/min on `/wallet/transfer` and `/wallet/topup`. Limits are tracked per user (or per IP if not logged in) and reset every minute. Going over returns `429` with a `Retry-After` header.
+
 ## Environment variables
 
 **backend/.env**
