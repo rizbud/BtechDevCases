@@ -72,7 +72,7 @@ func main() {
 	transactionHandler.RegisterRoutes(mux)
 	userHandler.RegisterRoutes(mux)
 
-	wrappedMux := middleware.LoggingMiddleware(mux)
+	wrappedMux := middleware.LoggingMiddleware(middleware.CORSMiddleware(mux))
 
 	log.Printf("Server is running on port %s", port)
 
