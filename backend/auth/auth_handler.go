@@ -54,6 +54,17 @@ func NewAuthHandler(pool *pgxpool.Pool, jwtManager *JWTManager) *AuthHandler {
 	}
 }
 
+// handleLogin godoc
+// @Summary Authenticate a user
+// @Description Returns a short-lived JWT and a refresh token.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body LoginRequest true "Login credentials"
+// @Success 200 {object} LoginResponse
+// @Failure 400 {object} server.ErrorResponse
+// @Failure 401 {object} server.ErrorResponse
+// @Router /auth/login [post]
 func (h *AuthHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 	if err := server.ValidateBodyRequest(r, &req); err != nil {
@@ -80,6 +91,16 @@ func (h *AuthHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	server.JSON(w, http.StatusOK, response)
 }
 
+// handleRegister godoc
+// @Summary Register a user
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body RegisterRequest true "Registration details"
+// @Success 200 {object} server.MessageResponse
+// @Failure 400 {object} server.ErrorResponse
+// @Failure 409 {object} server.ErrorResponse
+// @Router /auth/register [post]
 func (h *AuthHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
 	if err := server.ValidateBodyRequest(r, &req); err != nil {
@@ -104,13 +125,19 @@ func (h *AuthHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := map[string]string{
-		"message": "User registered successfully",
-	}
-
-	server.JSON(w, http.StatusOK, response)
+	server.JSON(w, http.StatusOK, server.MessageResponse{Message: "User registered successfully"})
 }
 
+// handleRefreshToken godoc
+// @Summary Refresh an access token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body RefreshTokenRequest true "Refresh token"
+// @Success 200 {object} RefreshTokenResponse
+// @Failure 400 {object} server.ErrorResponse
+// @Failure 401 {object} server.ErrorResponse
+// @Router /auth/refresh-token [post]
 func (h *AuthHandler) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 	var req RefreshTokenRequest
 	if err := server.ValidateBodyRequest(r, &req); err != nil {

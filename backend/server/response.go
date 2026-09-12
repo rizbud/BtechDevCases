@@ -6,8 +6,12 @@ import (
 )
 
 type ErrorResponse struct {
-	Message string `json:"message" default:"Hello World!" example:"Hello World!"`
+	Message string `json:"message"`
 	Error   any    `json:"error,omitempty"`
+}
+
+type MessageResponse struct {
+	Message string `json:"message"`
 }
 
 type PaginationResponse[T any] struct {

@@ -25,6 +25,10 @@ type TopUpRequest struct {
 	Amount float64 `json:"amount"`
 }
 
+type BalanceResponse struct {
+	Balance float64 `json:"balance"`
+}
+
 func NewTransactionHandler(pool *pgxpool.Pool) *TransactionHandler {
 	trxRepo := &TransactionRepository{
 		DB: pool,
@@ -44,6 +48,14 @@ func NewTransactionHandler(pool *pgxpool.Pool) *TransactionHandler {
 	}
 }
 
+// handleGetUserBalance godoc
+// @Summary Get wallet balance
+// @Tags wallet
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} BalanceResponse
+// @Failure 401 {object} server.ErrorResponse
+// @Router /wallet/balance [get]
 func (h *TransactionHandler) handleGetUserBalance(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("user_id").(string)
 
@@ -53,12 +65,20 @@ func (h *TransactionHandler) handleGetUserBalance(w http.ResponseWriter, r *http
 		return
 	}
 
-	response := map[string]float64{
-		"balance": balance,
-	}
-	server.JSON(w, http.StatusOK, response)
+	server.JSON(w, http.StatusOK, BalanceResponse{Balance: balance})
 }
 
+// handleTransfer godoc
+// @Summary Transfer funds
+// @Tags wallet
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body TransferRequest true "Transfer details"
+// @Success 200 {object} Transaction
+// @Failure 400 {object} server.ErrorResponse
+// @Failure 401 {object} server.ErrorResponse
+// @Router /wallet/transfer [post]
 func (h *TransactionHandler) handleTransfer(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("user_id").(string)
 
@@ -104,6 +124,17 @@ func (h *TransactionHandler) handleTransfer(w http.ResponseWriter, r *http.Reque
 	server.JSON(w, http.StatusOK, response)
 }
 
+// handleTopUp godoc
+// @Summary Top up wallet funds
+// @Tags wallet
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body TopUpRequest true "Top-up details"
+// @Success 200 {object} Transaction
+// @Failure 400 {object} server.ErrorResponse
+// @Failure 401 {object} server.ErrorResponse
+// @Router /wallet/topup [post]
 func (h *TransactionHandler) handleTopUp(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("user_id").(string)
 
@@ -128,6 +159,19 @@ func (h *TransactionHandler) handleTopUp(w http.ResponseWriter, r *http.Request)
 	server.JSON(w, http.StatusOK, response)
 }
 
+// handleGetTransactions godoc
+// @Summary List wallet transactions
+// @Tags wallet
+// @Produce json
+// @Security BearerAuth
+// @Param start_date query string true "Start date (YYYY-MM-DD)"
+// @Param end_date query string true "End date (YYYY-MM-DD)"
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Page size" default(10)
+// @Success 200 {object} server.PaginationResponse[Transaction]
+// @Failure 400 {object} server.ErrorResponse
+// @Failure 401 {object} server.ErrorResponse
+// @Router /wallet/transactions [get]
 func (h *TransactionHandler) handleGetTransactions(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("user_id").(string)
 	startDate := r.URL.Query().Get("start_date")
@@ -181,6 +225,16 @@ func (h *TransactionHandler) handleGetTransactions(w http.ResponseWriter, r *htt
 	)
 }
 
+// handleGetTransaction godoc
+// @Summary Get a wallet transaction
+// @Tags wallet
+// @Produce json
+// @Security BearerAuth
+// @Param transactionId path string true "Transaction ID"
+// @Success 200 {object} Transaction
+// @Failure 401 {object} server.ErrorResponse
+// @Failure 404 {object} server.ErrorResponse
+// @Router /wallet/transaction/{transactionId} [get]
 func (h *TransactionHandler) handleGetTransaction(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("user_id").(string)
 	transactionID := r.PathValue("transactionId")

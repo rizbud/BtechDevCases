@@ -19,7 +19,7 @@ type UserRepository struct {
 type User struct {
 	ID        string    `json:"id"`
 	Email     string    `json:"email"`
-	Password  string    `json:"password,omitempty"`
+	Password  string    `json:"password,omitempty" swaggerignore:"true"`
 	CreatedAt time.Time `json:"created_at,omitempty"`
 }
 

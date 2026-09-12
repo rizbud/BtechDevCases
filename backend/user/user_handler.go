@@ -24,6 +24,14 @@ func NewUserHandler(pool *pgxpool.Pool) *UserHandler {
 	}
 }
 
+// handleGetProfile godoc
+// @Summary Get the current user profile
+// @Tags profile
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} User
+// @Failure 401 {object} server.ErrorResponse
+// @Router /profile [get]
 func (h *UserHandler) handleGetProfile(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("user_id").(string)
 

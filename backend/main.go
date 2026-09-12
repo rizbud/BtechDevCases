@@ -8,13 +8,27 @@ import (
 
 	"btech-wallet/auth"
 	"btech-wallet/config"
+	_ "btech-wallet/docs"
 	"btech-wallet/middleware"
 	"btech-wallet/server"
 	"btech-wallet/transaction"
 	"btech-wallet/user"
 
 	"github.com/joho/godotenv"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
+
+//go:generate swag init -g main.go -o docs --parseDependency --parseInternal
+
+// @title BTech Wallet API
+// @version 1.0
+// @description REST API for authentication and wallet transactions.
+// @host localhost:3333
+// @BasePath /
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Enter "Bearer {token}".
 
 func main() {
 	if err := godotenv.Load(); err != nil {
@@ -45,6 +59,8 @@ func main() {
 		}
 		server.JSON(w, http.StatusOK, response)
 	})
+
+	mux.Handle("GET /swagger/", httpSwagger.WrapHandler)
 
 	jwtManager := auth.NewJWTManager(JWTSecret, 3600*time.Second) // 3600 seconds = 1 hour
 
