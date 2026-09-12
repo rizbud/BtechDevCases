@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TopUpModal } from "./TopUpModal";
+import { ToastContainer } from "@/components/ToastContainer";
 import { topUpApi } from "@/wallet/utils/api";
 
 vi.mock("@/wallet/utils/api", () => ({
@@ -14,6 +15,7 @@ function renderModal(onClose: () => void) {
   return render(
     <QueryClientProvider client={queryClient}>
       <TopUpModal open onClose={onClose} />
+      <ToastContainer />
     </QueryClientProvider>,
   );
 }
@@ -56,6 +58,28 @@ describe("TopUpModal", () => {
       await screen.findByText("Amount must be greater than zero"),
     ).toBeInTheDocument();
     expect(topUpApi).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("shows a rate-limit message with retry time on 429", async () => {
+    const { AxiosError } = await import("axios");
+    vi.mocked(topUpApi).mockRejectedValue(
+      new AxiosError("Request failed", "429", undefined, undefined, {
+        status: 429,
+        headers: { "retry-after": "42" },
+        data: { message: "Too many requests, please slow down" },
+      } as never),
+    );
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+    renderModal(onClose);
+
+    await user.type(screen.getByPlaceholderText("0.00"), "100");
+    await user.click(screen.getByRole("button", { name: "Top Up" }));
+
+    expect(
+      await screen.findByText("Too many top ups. Try again in 42s."),
+    ).toBeInTheDocument();
     expect(onClose).not.toHaveBeenCalled();
   });
 

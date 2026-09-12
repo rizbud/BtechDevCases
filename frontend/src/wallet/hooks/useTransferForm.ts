@@ -7,6 +7,7 @@ import {
   type TransferFormValues,
 } from "@/wallet/utils/schema";
 import { useTransferMutation } from "@/wallet/hooks/useTransferMutation";
+import { showToast } from "@/utils/toast";
 
 export function useTransferForm(onSuccess: () => void) {
   const mutation = useTransferMutation();
@@ -26,6 +27,15 @@ export function useTransferForm(onSuccess: () => void) {
     } catch (err) {
       if (err instanceof AxiosError) {
         const data = err?.response?.data;
+        if (err.response?.status === 429) {
+          const retryAfter = err.response.headers["retry-after"];
+          showToast(
+            retryAfter
+              ? `Too many transfers. Try again in ${retryAfter}s.`
+              : "Too many transfers. Please slow down.",
+          );
+          return;
+        }
         if (data?.error && typeof data.error === "object") {
           for (const [field, message] of Object.entries(data.error)) {
             form.setError(field as keyof TransferFormInput, {

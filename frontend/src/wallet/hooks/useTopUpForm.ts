@@ -7,6 +7,7 @@ import {
   type TopUpFormValues,
 } from "@/wallet/utils/schema";
 import { useTopUpMutation } from "@/wallet/hooks/useTopUpMutation";
+import { showToast } from "@/utils/toast";
 
 export function useTopUpForm(onSuccess: () => void) {
   const mutation = useTopUpMutation();
@@ -22,6 +23,15 @@ export function useTopUpForm(onSuccess: () => void) {
     } catch (err) {
       if (err instanceof AxiosError) {
         const data = err?.response?.data;
+        if (err.response?.status === 429) {
+          const retryAfter = err.response.headers["retry-after"];
+          showToast(
+            retryAfter
+              ? `Too many top ups. Try again in ${retryAfter}s.`
+              : "Too many top ups. Please slow down.",
+          );
+          return;
+        }
         if (data?.error && typeof data.error === "object") {
           for (const [field, message] of Object.entries(data.error)) {
             form.setError(field as keyof TopUpFormInput, {

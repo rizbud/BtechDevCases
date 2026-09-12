@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TransferModal } from "./TransferModal";
+import { ToastContainer } from "@/components/ToastContainer";
 import { transferApi } from "@/wallet/utils/api";
 
 vi.mock("@/wallet/utils/api", () => ({
@@ -14,6 +15,7 @@ function renderModal(onClose: () => void) {
   return render(
     <QueryClientProvider client={queryClient}>
       <TransferModal open onClose={onClose} />
+      <ToastContainer />
     </QueryClientProvider>,
   );
 }
@@ -97,6 +99,32 @@ describe("TransferModal", () => {
     await user.click(screen.getByRole("button", { name: "Transfer" }));
 
     expect(await screen.findByText("Recipient not found")).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("shows a rate-limit message with retry time on 429", async () => {
+    const { AxiosError } = await import("axios");
+    vi.mocked(transferApi).mockRejectedValue(
+      new AxiosError("Request failed", "429", undefined, undefined, {
+        status: 429,
+        headers: { "retry-after": "42" },
+        data: { message: "Too many requests, please slow down" },
+      } as never),
+    );
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+    renderModal(onClose);
+
+    await user.type(
+      screen.getByPlaceholderText("recipient@example.com"),
+      "recipient@example.com",
+    );
+    await user.type(screen.getByPlaceholderText("0.00"), "50");
+    await user.click(screen.getByRole("button", { name: "Transfer" }));
+
+    expect(
+      await screen.findByText("Too many transfers. Try again in 42s."),
+    ).toBeInTheDocument();
     expect(onClose).not.toHaveBeenCalled();
   });
 });
