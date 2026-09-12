@@ -3,15 +3,27 @@ name: btech-wallet
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: btech-wallet-postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-btech_wallet_db}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: btech_wallet_db
     ports:
       - "5432:5432"
     volumes:
       - btech-wallet-db:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      PORT: 3333
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/btech_wallet_db?sslmode=disable
+      JWT_SECRET: your_jwt_secret
+    ports:
+      - "3333:3333"
+    depends_on:
+      - postgres
 
 volumes:
   btech-wallet-db:
