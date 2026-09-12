@@ -16,6 +16,25 @@ type TransactionRepository struct {
 	DB *pgxpool.Pool
 }
 
+type dbtx interface {
+	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+}
+
+func (r *TransactionRepository) LockUserForUpdate(ctx context.Context, tx pgx.Tx, userID string) error {
+	var id string
+	err := tx.QueryRow(ctx, `SELECT id FROM users WHERE id = $1 FOR UPDATE`, userID).Scan(&id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return fmt.Errorf("User ID does not exist")
+		}
+		log.Printf("[TransactionRepository.LockUserForUpdate] Failed to lock user %s: %v", userID, err)
+		return fmt.Errorf("Failed to lock user %s", userID)
+	}
+	return nil
+}
+
 type Transaction struct {
 	ID             string    `json:"id"`
 	SenderID       *string   `json:"sender_id,omitempty"`
@@ -28,13 +47,14 @@ type Transaction struct {
 
 func (r *TransactionRepository) CreateTransaction(
 	ctx context.Context,
+	db dbtx,
 	fromUserID *string,
 	toUserID string,
 	amount float64,
 ) (string, error) {
 	var transactionID string
 
-	err := r.DB.QueryRow(
+	err := db.QueryRow(
 		ctx,
 		`INSERT INTO transactions (from_user_id, to_user_id, amount) VALUES ($1, $2, $3) RETURNING id`,
 		fromUserID,
@@ -137,11 +157,12 @@ func (r *TransactionRepository) GetTransactionsByUserID(
 
 func (r *TransactionRepository) GetTransactionByID(
 	ctx context.Context,
+	db dbtx,
 	userID string,
 	transactionID string,
 ) (Transaction, error) {
 	var transaction Transaction
-	err := r.DB.QueryRow(
+	err := db.QueryRow(
 		ctx,
 		`SELECT t.id, COALESCE(fu.id::text, NULL), COALESCE(fu.email, NULL), tu.id::text, tu.email, t.amount, t.created_at
 			FROM transactions t
@@ -176,9 +197,9 @@ func (r *TransactionRepository) GetTransactionByID(
 	return transaction, nil
 }
 
-func (r *TransactionRepository) GetUserBalance(ctx context.Context, userID string) (float64, error) {
+func (r *TransactionRepository) GetUserBalance(ctx context.Context, db dbtx, userID string) (float64, error) {
 	var balance float64
-	err := r.DB.QueryRow(
+	err := db.QueryRow(
 		ctx,
 		"SELECT balance FROM user_balances WHERE user_id = $1",
 		userID,

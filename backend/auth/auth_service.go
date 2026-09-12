@@ -73,9 +73,10 @@ func generateRandomToken() string {
 	return hex.EncodeToString(b)
 }
 
-func (s *AuthService) issueRefreshToken(ctx context.Context, userID string) (string, error) {
+func (s *AuthService) issueRefreshToken(ctx context.Context, db dbtx, userID string) (string, error) {
 	refreshToken, err := s.AuthRepository.CreateRefreshToken(
 		ctx,
+		db,
 		userID,
 		generateRandomToken(),
 		time.Now().Add(7*24*time.Hour), // Set refresh token expiration to 7 days
@@ -103,7 +104,7 @@ func (s *AuthService) login(ctx context.Context, email string, password string) 
 		return LoginResponse{}, fmt.Errorf("Email or password is incorrect")
 	}
 
-	refreshToken, err := s.issueRefreshToken(ctx, user.ID)
+	refreshToken, err := s.issueRefreshToken(ctx, s.AuthRepository.DB, user.ID)
 	if err != nil {
 		log.Printf("[AuthService.login] Failed to issue refresh token: %v", err)
 		return LoginResponse{}, err
@@ -134,7 +135,7 @@ func (s *AuthService) refreshToken(ctx context.Context, token string) (RefreshTo
 
 	defer tx.Rollback(ctx)
 
-	userID, userEmail, _, err := s.AuthRepository.GetRefreshToken(ctx, token)
+	userID, userEmail, _, err := s.AuthRepository.GetRefreshToken(ctx, tx, token)
 	if err != nil {
 		return RefreshTokenResponse{}, err
 	}
@@ -145,13 +146,13 @@ func (s *AuthService) refreshToken(ctx context.Context, token string) (RefreshTo
 		return RefreshTokenResponse{}, err
 	}
 
-	newRefreshToken, err := s.issueRefreshToken(ctx, *userID)
+	newRefreshToken, err := s.issueRefreshToken(ctx, tx, *userID)
 	if err != nil {
 		log.Printf("[AuthService.refreshToken] Failed to issue new refresh token: %v", err)
 		return RefreshTokenResponse{}, err
 	}
 
-	if err := s.AuthRepository.RevokeRefreshToken(ctx, token); err != nil {
+	if err := s.AuthRepository.RevokeRefreshToken(ctx, tx, token); err != nil {
 		log.Printf("[AuthService.refreshToken] Failed to revoke old refresh token: %v", err)
 		return RefreshTokenResponse{}, err
 	}

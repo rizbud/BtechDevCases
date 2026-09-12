@@ -12,7 +12,7 @@ type TransactionService struct {
 }
 
 func (s *TransactionService) getUserBalance(ctx context.Context, userID string) (float64, error) {
-	balance, err := s.Repository.GetUserBalance(ctx, userID)
+	balance, err := s.Repository.GetUserBalance(ctx, s.Repository.DB, userID)
 	if err != nil {
 		return 0, err
 	}
@@ -47,7 +47,11 @@ func (s *TransactionService) transfer(ctx context.Context, fromUserID, toUserID 
 
 	defer tx.Rollback(ctx) // rollback the transaction in case of an error
 
-	balance, err := s.Repository.GetUserBalance(ctx, fromUserID)
+	if err := s.Repository.LockUserForUpdate(ctx, tx, fromUserID); err != nil {
+		return Transaction{}, err
+	}
+
+	balance, err := s.Repository.GetUserBalance(ctx, tx, fromUserID)
 	if err != nil {
 		return Transaction{}, err
 	}
@@ -57,12 +61,12 @@ func (s *TransactionService) transfer(ctx context.Context, fromUserID, toUserID 
 	}
 
 	// Perform the transfer
-	transactionID, err := s.Repository.CreateTransaction(ctx, &fromUserID, toUserID, amount)
+	transactionID, err := s.Repository.CreateTransaction(ctx, tx, &fromUserID, toUserID, amount)
 	if err != nil {
 		return Transaction{}, err
 	}
 
-	transaction, err := s.Repository.GetTransactionByID(ctx, fromUserID, transactionID)
+	transaction, err := s.Repository.GetTransactionByID(ctx, tx, fromUserID, transactionID)
 	if err != nil {
 		return Transaction{}, err
 	}
@@ -87,12 +91,12 @@ func (s *TransactionService) topUp(ctx context.Context, userID string, amount fl
 	defer tx.Rollback(ctx) // rollback the transaction in case of an error
 
 	// Perform the top-up
-	transactionID, err := s.Repository.CreateTransaction(ctx, nil, userID, amount)
+	transactionID, err := s.Repository.CreateTransaction(ctx, tx, nil, userID, amount)
 	if err != nil {
 		return Transaction{}, err
 	}
 
-	transaction, err := s.Repository.GetTransactionByID(ctx, userID, transactionID)
+	transaction, err := s.Repository.GetTransactionByID(ctx, tx, userID, transactionID)
 	if err != nil {
 		return Transaction{}, err
 	}
@@ -168,7 +172,7 @@ func (s *TransactionService) getTransactionsByUserID(
 }
 
 func (s *TransactionService) getTransactionByID(ctx context.Context, userID, transactionID string) (Transaction, error) {
-	transaction, err := s.Repository.GetTransactionByID(ctx, userID, transactionID)
+	transaction, err := s.Repository.GetTransactionByID(ctx, s.Repository.DB, userID, transactionID)
 	if err != nil {
 		return Transaction{}, err
 	}

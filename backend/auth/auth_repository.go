@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -15,14 +16,21 @@ type AuthRepository struct {
 	DB *pgxpool.Pool
 }
 
+type dbtx interface {
+	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+}
+
 func (r *AuthRepository) CreateRefreshToken(
 	ctx context.Context,
+	db dbtx,
 	userID string,
 	token string,
 	expiresAt time.Time,
 ) (*string, error) {
 	var refreshToken string
-	err := r.DB.QueryRow(
+	err := db.QueryRow(
 		ctx,
 		`INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3) RETURNING token`,
 		userID,
@@ -40,18 +48,20 @@ func (r *AuthRepository) CreateRefreshToken(
 
 func (r *AuthRepository) GetRefreshToken(
 	ctx context.Context,
+	db dbtx,
 	token string,
 ) (*string, *string, time.Time, error) {
 	var userID string
 	var userEmail string
 	var expiresAt time.Time
 
-	err := r.DB.QueryRow(
+	err := db.QueryRow(
 		ctx,
 		`SELECT u.id, u.email, rt.expires_at
 		FROM refresh_tokens rt
 		JOIN users u ON rt.user_id = u.id
-		WHERE rt.token = $1 AND rt.expires_at > NOW() AND rt.revoked_at IS NULL`,
+		WHERE rt.token = $1 AND rt.expires_at > NOW() AND rt.revoked_at IS NULL
+		FOR UPDATE OF rt`,
 		token,
 	).Scan(&userID, &userEmail, &expiresAt)
 	if err != nil {
@@ -67,9 +77,10 @@ func (r *AuthRepository) GetRefreshToken(
 
 func (r *AuthRepository) RevokeRefreshToken(
 	ctx context.Context,
+	db dbtx,
 	token string,
 ) error {
-	_, err := r.DB.Exec(
+	_, err := db.Exec(
 		ctx,
 		`UPDATE refresh_tokens
 		SET revoked_at = NOW()
