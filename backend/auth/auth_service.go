@@ -2,9 +2,12 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"regexp"
+	"time"
 
 	"btech-wallet/user"
 
@@ -12,8 +15,9 @@ import (
 )
 
 type AuthService struct {
-	Repository *user.UserRepository
-	JWTManager *JWTManager
+	AuthRepository *AuthRepository
+	UserRepository *user.UserRepository
+	JWTManager     *JWTManager
 }
 
 func (s *AuthService) validateEmail(email string) bool {
@@ -62,11 +66,38 @@ func (s *AuthService) register(ctx context.Context, email string, password strin
 		return err
 	}
 
-	return s.Repository.CreateUser(ctx, email, string(hashed_password))
+	return s.UserRepository.CreateUser(ctx, email, string(hashed_password))
+}
+
+func generateRandomToken() string {
+	b := make([]byte, 32)
+
+	_, err := rand.Read(b)
+	if err != nil {
+		log.Printf("[generateRandomToken] Failed to generate random token: %v", err)
+		return ""
+	}
+
+	return hex.EncodeToString(b)
+}
+
+func (s *AuthService) issueRefreshToken(ctx context.Context, userID string) (string, error) {
+	refreshToken, err := s.AuthRepository.CreateRefreshToken(
+		ctx,
+		userID,
+		generateRandomToken(),
+		time.Now().Add(7*24*time.Hour), // Set refresh token expiration to 7 days
+	)
+	if err != nil {
+		log.Printf("[AuthService.issueRefreshToken] Failed to create refresh token: %v", err)
+		return "", err
+	}
+
+	return *refreshToken, nil
 }
 
 func (s *AuthService) login(ctx context.Context, email string, password string) (LoginResponse, error) {
-	user, err := s.Repository.GetUserByEmail(ctx, email)
+	user, err := s.UserRepository.GetUserByEmail(ctx, email)
 	if err != nil {
 		if err.Error() == "User with email "+email+" not found" {
 			return LoginResponse{}, fmt.Errorf("Email or password is incorrect")
@@ -80,6 +111,12 @@ func (s *AuthService) login(ctx context.Context, email string, password string) 
 		return LoginResponse{}, fmt.Errorf("Email or password is incorrect")
 	}
 
+	refreshToken, err := s.issueRefreshToken(ctx, user.ID)
+	if err != nil {
+		log.Printf("[AuthService.login] Failed to issue refresh token: %v", err)
+		return LoginResponse{}, err
+	}
+
 	jwt, err := s.JWTManager.Issue(user.ID, user.Email)
 	if err != nil {
 		log.Printf("[AuthService.login] Failed to issue JWT: %v", err)
@@ -87,10 +124,47 @@ func (s *AuthService) login(ctx context.Context, email string, password string) 
 	}
 
 	userData := LoginResponse{
-		ID:        user.ID,
-		Email:     user.Email,
-		AuthToken: jwt,
+		ID:           user.ID,
+		Email:        user.Email,
+		AuthToken:    jwt,
+		RefreshToken: refreshToken,
 	}
 
 	return userData, nil
+}
+
+func (s *AuthService) refreshToken(ctx context.Context, token string) (RefreshTokenResponse, error) {
+	tx, err := s.AuthRepository.DB.Begin(ctx)
+	if err != nil {
+		log.Printf("[AuthService.refreshToken] Failed to begin transaction: %v", err)
+		return RefreshTokenResponse{}, err
+	}
+
+	defer tx.Rollback(ctx)
+
+	userID, userEmail, _, err := s.AuthRepository.GetRefreshToken(ctx, token)
+	if err != nil {
+		return RefreshTokenResponse{}, err
+	}
+
+	newAuthToken, err := s.JWTManager.Issue(fmt.Sprintf("%d", userID), *userEmail)
+	if err != nil {
+		log.Printf("[AuthService.refreshToken] Failed to issue new JWT: %v", err)
+		return RefreshTokenResponse{}, err
+	}
+
+	newRefreshToken, err := s.issueRefreshToken(ctx, *userID)
+	if err != nil {
+		log.Printf("[AuthService.refreshToken] Failed to issue new refresh token: %v", err)
+		return RefreshTokenResponse{}, err
+	}
+
+	tx.Commit(ctx)
+
+	response := RefreshTokenResponse{
+		AuthToken:    newAuthToken,
+		RefreshToken: newRefreshToken,
+	}
+
+	return response, nil
 }

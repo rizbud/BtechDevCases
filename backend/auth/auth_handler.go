@@ -21,9 +21,19 @@ type RegisterRequest struct {
 }
 
 type LoginResponse struct {
-	ID        string `json:"id"`
-	Email     string `json:"email"`
-	AuthToken string `json:"auth_token"`
+	ID           string `json:"id"`
+	Email        string `json:"email"`
+	AuthToken    string `json:"auth_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+type RefreshTokenRequest struct {
+	Token string `json:"token"`
+}
+
+type RefreshTokenResponse struct {
+	AuthToken    string `json:"auth_token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 type AuthHandler struct {
@@ -31,12 +41,12 @@ type AuthHandler struct {
 }
 
 func NewAuthHandler(pool *pgxpool.Pool, jwtManager *JWTManager) *AuthHandler {
-	repo := &user.UserRepository{
-		DB: pool,
-	}
+	authRepo := &AuthRepository{DB: pool}
+	userRepo := &user.UserRepository{DB: pool}
 	service := &AuthService{
-		Repository: repo,
-		JWTManager: jwtManager,
+		AuthRepository: authRepo,
+		UserRepository: userRepo,
+		JWTManager:     jwtManager,
 	}
 
 	return &AuthHandler{
@@ -101,7 +111,35 @@ func (h *AuthHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	server.JSON(w, http.StatusOK, response)
 }
 
+func (h *AuthHandler) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
+	var req RefreshTokenRequest
+	if err := server.ValidateBodyRequest(r, &req); err != nil {
+		server.ErrorResponseJSON(w, http.StatusBadRequest, "Invalid request payload", nil)
+		return
+	}
+	if req.Token == "" {
+		validationErrors := map[string]string{"token": "Refresh token is required"}
+		server.ErrorResponseJSON(w, http.StatusBadRequest, "Validation errors", validationErrors)
+		return
+	}
+
+	response, err := h.service.refreshToken(r.Context(), req.Token)
+	if err != nil {
+		statusCode := http.StatusInternalServerError
+		message := "Failed to refresh token"
+		if err.Error() == "Refresh token not found or expired" {
+			statusCode = http.StatusUnauthorized
+			message = err.Error()
+		}
+		server.ErrorResponseJSON(w, statusCode, message, nil)
+		return
+	}
+
+	server.JSON(w, http.StatusOK, response)
+}
+
 func (h *AuthHandler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/auth/login", h.handleLogin)
-	mux.HandleFunc("/auth/register", h.handleRegister)
+	mux.HandleFunc("POST /auth/login", h.handleLogin)
+	mux.HandleFunc("POST /auth/register", h.handleRegister)
+	mux.HandleFunc("POST /auth/refresh-token", h.handleRefreshToken)
 }
