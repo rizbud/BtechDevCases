@@ -72,7 +72,8 @@ func main() {
 	transactionHandler.RegisterRoutes(mux)
 	userHandler.RegisterRoutes(mux)
 
-	wrappedMux := middleware.LoggingMiddleware(middleware.CORSMiddleware(mux))
+	generalLimiter := middleware.NewRateLimiter(60, time.Minute)
+	wrappedMux := middleware.LoggingMiddleware(middleware.CORSMiddleware(generalLimiter.Middleware(mux)))
 
 	log.Printf("Server is running on port %s", port)
 

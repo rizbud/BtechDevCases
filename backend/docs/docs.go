@@ -257,6 +257,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/server.ErrorResponse"
                         }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
                     }
                 }
             }
@@ -415,6 +421,12 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
                         "schema": {
                             "$ref": "#/definitions/server.ErrorResponse"
                         }

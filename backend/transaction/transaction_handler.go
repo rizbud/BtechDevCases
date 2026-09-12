@@ -3,6 +3,7 @@ package transaction
 import (
 	"maps"
 	"net/http"
+	"time"
 
 	"btech-wallet/middleware"
 	"btech-wallet/server"
@@ -12,8 +13,10 @@ import (
 )
 
 type TransactionHandler struct {
-	TrxService  *TransactionService
-	UserService *user.UserService
+	TrxService      *TransactionService
+	UserService     *user.UserService
+	TransferLimiter *middleware.RateLimiter
+	TopUpLimiter    *middleware.RateLimiter
 }
 
 type TransferRequest struct {
@@ -51,8 +54,10 @@ func NewTransactionHandler(pool *pgxpool.Pool) *TransactionHandler {
 		Repository: userRepo,
 	}
 	return &TransactionHandler{
-		TrxService:  trxService,
-		UserService: userService,
+		TrxService:      trxService,
+		UserService:     userService,
+		TransferLimiter: middleware.NewRateLimiter(10, time.Minute),
+		TopUpLimiter:    middleware.NewRateLimiter(10, time.Minute),
 	}
 }
 
@@ -87,6 +92,7 @@ func (h *TransactionHandler) handleGetUserBalance(w http.ResponseWriter, r *http
 // @Success 200 {object} TransactionResponse
 // @Failure 400 {object} server.ErrorResponse
 // @Failure 401 {object} server.ErrorResponse
+// @Failure 429 {object} server.ErrorResponse
 // @Router /wallet/transfer [post]
 func (h *TransactionHandler) handleTransfer(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("user_id").(string)
@@ -150,6 +156,7 @@ func (h *TransactionHandler) handleTransfer(w http.ResponseWriter, r *http.Reque
 // @Success 200 {object} TransactionResponse
 // @Failure 400 {object} server.ErrorResponse
 // @Failure 401 {object} server.ErrorResponse
+// @Failure 429 {object} server.ErrorResponse
 // @Router /wallet/topup [post]
 func (h *TransactionHandler) handleTopUp(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("user_id").(string)
@@ -276,8 +283,14 @@ func (h *TransactionHandler) handleGetTransaction(w http.ResponseWriter, r *http
 
 func (h *TransactionHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("GET /wallet/balance", middleware.AuthMiddleware(http.HandlerFunc(h.handleGetUserBalance)))
-	mux.Handle("POST /wallet/transfer", middleware.AuthMiddleware(http.HandlerFunc(h.handleTransfer)))
-	mux.Handle("POST /wallet/topup", middleware.AuthMiddleware(http.HandlerFunc(h.handleTopUp)))
+	mux.Handle(
+		"POST /wallet/transfer",
+		middleware.AuthMiddleware(h.TransferLimiter.Middleware(http.HandlerFunc(h.handleTransfer))),
+	)
+	mux.Handle(
+		"POST /wallet/topup",
+		middleware.AuthMiddleware(h.TopUpLimiter.Middleware(http.HandlerFunc(h.handleTopUp))),
+	)
 	mux.Handle(
 		"GET /wallet/transactions",
 		middleware.AuthMiddleware(http.HandlerFunc(h.handleGetTransactions)),
