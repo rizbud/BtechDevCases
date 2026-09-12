@@ -58,7 +58,7 @@ func TestHandleTransfer_InvalidBody(t *testing.T) {
 
 func TestHandleTransfer_InvalidRecipientEmail(t *testing.T) {
 	h := newTestTransactionHandler()
-	body := `{"to_user_email":"not-an-email","amount":10}`
+	body := `{"recipient":"not-an-email","amount":10}`
 	r := newRequestWithUser(http.MethodPost, "/wallet/transfer", body)
 	w := httptest.NewRecorder()
 
@@ -68,8 +68,8 @@ func TestHandleTransfer_InvalidRecipientEmail(t *testing.T) {
 		t.Fatalf("status = %d, want %d", w.Code, http.StatusBadRequest)
 	}
 	errs := decodeErrors(t, w)
-	if _, ok := errs["to_user_email"]; !ok {
-		t.Error("expected to_user_email validation error")
+	if _, ok := errs["recipient"]; !ok {
+		t.Error("expected recipient validation error")
 	}
 }
 

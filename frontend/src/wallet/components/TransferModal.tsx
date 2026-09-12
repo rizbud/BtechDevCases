@@ -18,10 +18,10 @@ export function TransferModal({ open, onClose }: TransferModalProps) {
             type="email"
             placeholder="recipient@example.com"
             className="input input-bordered w-full"
-            {...register("to_user_email")}
+            {...register("recipient")}
           />
-          {errors.to_user_email && (
-            <p className="text-error text-sm">{errors.to_user_email.message}</p>
+          {errors.recipient && (
+            <p className="text-error text-sm">{errors.recipient.message}</p>
           )}
         </div>
 

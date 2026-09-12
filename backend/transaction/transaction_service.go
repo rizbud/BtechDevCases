@@ -26,10 +26,10 @@ func (s *TransactionService) validateTransferRequest(fromUserID, toUserID string
 		validationErrors["from_user_id"] = "From user ID is required"
 	}
 	if toUserID == "" {
-		validationErrors["to_user_email"] = "To user Email is required"
+		validationErrors["recipient"] = "To user Email is required"
 	}
 	if fromUserID == toUserID {
-		validationErrors["to_user_email"] = "Cannot transfer to the same user"
+		validationErrors["recipient"] = "Cannot transfer to the same user"
 	}
 	if amount <= 0 {
 		validationErrors["amount"] = "Amount must be greater than zero"

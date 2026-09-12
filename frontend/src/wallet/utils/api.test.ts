@@ -68,7 +68,7 @@ describe("transferApi", () => {
     vi.mocked(api.post).mockResolvedValue({ data: { message: "ok" } });
     await transferApi("recipient@example.com", 25, "lunch");
     expect(api.post).toHaveBeenCalledWith("/wallet/transfer", {
-      to_user_email: "recipient@example.com",
+      recipient: "recipient@example.com",
       amount: 25,
       notes: "lunch",
     });

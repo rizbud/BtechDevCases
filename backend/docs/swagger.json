@@ -538,6 +538,9 @@
             "properties": {
                 "amount": {
                     "type": "number"
+                },
+                "notes": {
+                    "type": "string"
                 }
             }
         },
@@ -551,6 +554,9 @@
                     "type": "string"
                 },
                 "id": {
+                    "type": "string"
+                },
+                "notes": {
                     "type": "string"
                 },
                 "recipient_email": {
@@ -582,6 +588,9 @@
                 "message": {
                     "type": "string"
                 },
+                "notes": {
+                    "type": "string"
+                },
                 "recipient_email": {
                     "type": "string"
                 },
@@ -601,6 +610,9 @@
             "properties": {
                 "amount": {
                     "type": "number"
+                },
+                "notes": {
+                    "type": "string"
                 },
                 "recipient": {
                     "type": "string"

@@ -81,7 +81,7 @@ describe("TransferModal", () => {
         undefined,
         {
           status: 400,
-          data: { error: { to_user_email: "Recipient not found" } },
+          data: { error: { recipient: "Recipient not found" } },
         } as never,
       ),
     );

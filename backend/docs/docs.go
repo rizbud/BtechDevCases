@@ -544,6 +544,9 @@ const docTemplate = `{
             "properties": {
                 "amount": {
                     "type": "number"
+                },
+                "notes": {
+                    "type": "string"
                 }
             }
         },
@@ -557,6 +560,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
+                    "type": "string"
+                },
+                "notes": {
                     "type": "string"
                 },
                 "recipient_email": {
@@ -588,6 +594,9 @@ const docTemplate = `{
                 "message": {
                     "type": "string"
                 },
+                "notes": {
+                    "type": "string"
+                },
                 "recipient_email": {
                     "type": "string"
                 },
@@ -607,6 +616,9 @@ const docTemplate = `{
             "properties": {
                 "amount": {
                     "type": "number"
+                },
+                "notes": {
+                    "type": "string"
                 },
                 "recipient": {
                     "type": "string"

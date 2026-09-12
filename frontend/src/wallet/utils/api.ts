@@ -41,7 +41,7 @@ export const transferApi = async (
 ) => {
   const response = await api.post<{ message: string } & Transaction>(
     "/wallet/transfer",
-    { to_user_email: toUserEmail, amount, notes },
+    { recipient: toUserEmail, amount, notes },
   );
   return response.data;
 };

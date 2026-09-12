@@ -9,7 +9,7 @@ export type TopUpFormInput = z.input<typeof topUpSchema>;
 export type TopUpFormValues = z.output<typeof topUpSchema>;
 
 export const transferSchema = z.object({
-  to_user_email: z
+  recipient: z
     .string()
     .min(1, "Recipient email is required")
     .email("Invalid email format"),

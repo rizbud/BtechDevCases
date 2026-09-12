@@ -16,7 +16,7 @@ describe("topUpSchema", () => {
 describe("transferSchema", () => {
   it("accepts a valid recipient, amount, and notes", () => {
     const result = transferSchema.safeParse({
-      to_user_email: "recipient@example.com",
+      recipient: "recipient@example.com",
       amount: "50",
       notes: "for lunch",
     });
@@ -25,7 +25,7 @@ describe("transferSchema", () => {
 
   it("accepts a missing notes field", () => {
     const result = transferSchema.safeParse({
-      to_user_email: "recipient@example.com",
+      recipient: "recipient@example.com",
       amount: "50",
     });
     expect(result.success).toBe(true);
@@ -33,7 +33,7 @@ describe("transferSchema", () => {
 
   it("rejects an invalid recipient email", () => {
     const result = transferSchema.safeParse({
-      to_user_email: "not-an-email",
+      recipient: "not-an-email",
       amount: "50",
     });
     expect(result.success).toBe(false);
@@ -41,7 +41,7 @@ describe("transferSchema", () => {
 
   it("rejects a non-positive amount", () => {
     const result = transferSchema.safeParse({
-      to_user_email: "recipient@example.com",
+      recipient: "recipient@example.com",
       amount: "0",
     });
     expect(result.success).toBe(false);

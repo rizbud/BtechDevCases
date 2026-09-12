@@ -17,7 +17,7 @@ type TransactionHandler struct {
 }
 
 type TransferRequest struct {
-	ToUserEmail string  `json:"to_user_email"`
+	ToUserEmail string  `json:"recipient"`
 	Amount      float64 `json:"amount"`
 	Notes       string  `json:"notes"`
 }
@@ -99,7 +99,7 @@ func (h *TransactionHandler) handleTransfer(w http.ResponseWriter, r *http.Reque
 	}
 
 	if !user.ValidateEmail(req.ToUserEmail) {
-		validationErrors := map[string]string{"to_user_email": "To user email is not a valid email address"}
+		validationErrors := map[string]string{"recipient": "To user email is not a valid email address"}
 		server.ErrorResponseJSON(w, http.StatusBadRequest, "Validation errors", validationErrors)
 		return
 	}

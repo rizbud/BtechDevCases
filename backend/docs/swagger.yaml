@@ -78,6 +78,8 @@ definitions:
     properties:
       amount:
         type: number
+      notes:
+        type: string
     type: object
   transaction.Transaction:
     properties:
@@ -86,6 +88,8 @@ definitions:
       created_at:
         type: string
       id:
+        type: string
+      notes:
         type: string
       recipient_email:
         type: string
@@ -106,6 +110,8 @@ definitions:
         type: string
       message:
         type: string
+      notes:
+        type: string
       recipient_email:
         type: string
       recipient_id:
@@ -119,6 +125,8 @@ definitions:
     properties:
       amount:
         type: number
+      notes:
+        type: string
       recipient:
         type: string
     type: object

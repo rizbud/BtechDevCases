@@ -17,7 +17,7 @@ export function useTransferForm(onSuccess: () => void) {
   const onSubmit = form.handleSubmit(async (values) => {
     try {
       await mutation.mutateAsync({
-        toUserEmail: values.to_user_email,
+        toUserEmail: values.recipient,
         amount: values.amount,
         notes: values.notes,
       });

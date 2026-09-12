@@ -17,8 +17,8 @@ func TestValidateTransferRequest(t *testing.T) {
 	}{
 		{"valid", "user-1", "user-2", 10, nil},
 		{"missing from", "", "user-2", 10, []string{"from_user_id"}},
-		{"missing to", "user-1", "", 10, []string{"to_user_email"}},
-		{"same user", "user-1", "user-1", 10, []string{"to_user_email"}},
+		{"missing to", "user-1", "", 10, []string{"recipient"}},
+		{"same user", "user-1", "user-1", 10, []string{"recipient"}},
 		{"zero amount", "user-1", "user-2", 0, []string{"amount"}},
 		{"negative amount", "user-1", "user-2", -5, []string{"amount"}},
 	}
