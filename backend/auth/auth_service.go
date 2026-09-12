@@ -159,6 +159,11 @@ func (s *AuthService) refreshToken(ctx context.Context, token string) (RefreshTo
 		return RefreshTokenResponse{}, err
 	}
 
+	if err := s.AuthRepository.RevokeRefreshToken(ctx, token); err != nil {
+		log.Printf("[AuthService.refreshToken] Failed to revoke old refresh token: %v", err)
+		return RefreshTokenResponse{}, err
+	}
+
 	tx.Commit(ctx)
 
 	response := RefreshTokenResponse{
