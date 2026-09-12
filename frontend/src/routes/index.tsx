@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { BalanceCard } from "@/wallet/components/BalanceCard";
 import { TopUpModal } from "@/wallet/components/TopUpModal";
 import { TransferModal } from "@/wallet/components/TransferModal";
@@ -7,6 +7,11 @@ import { TransactionTable } from "@/wallet/components/TransactionTable";
 import { TransactionDetailModal } from "@/wallet/components/TransactionDetailModal";
 
 export const Route = createFileRoute("/")({
+  beforeLoad: () => {
+    if (!localStorage.getItem("token")) {
+      throw redirect({ to: "/login" });
+    }
+  },
   component: Wallet,
 });
 

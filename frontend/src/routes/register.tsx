@@ -1,8 +1,18 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  redirect,
+  useNavigate,
+} from "@tanstack/react-router";
 import { useRegisterForm } from "@/auth/hooks/useRegisterForm";
 import { PasswordInput } from "@/auth/components/PasswordInput";
 
 export const Route = createFileRoute("/register")({
+  beforeLoad: () => {
+    if (localStorage.getItem("token")) {
+      throw redirect({ to: "/" });
+    }
+  },
   component: Register,
 });
 

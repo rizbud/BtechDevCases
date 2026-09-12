@@ -29,9 +29,11 @@ describe("TransactionDetailModal", () => {
       isLoading: true,
     } as ReturnType<typeof useTransactionDetail>);
 
-    render(<TransactionDetailModal transactionId="tx-1" onClose={vi.fn()} />);
+    const { container } = render(
+      <TransactionDetailModal transactionId="tx-1" onClose={vi.fn()} />,
+    );
 
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    expect(container.querySelectorAll(".skeleton").length).toBeGreaterThan(0);
   });
 
   it("renders transaction details, falling back to 'Top Up' when there is no sender", () => {

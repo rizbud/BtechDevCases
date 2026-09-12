@@ -61,6 +61,27 @@ describe("useLoginForm", () => {
     expect(navigate).toHaveBeenCalledWith({ to: "/" });
   });
 
+  it("keeps the submit button disabled while the redirect is pending", async () => {
+    vi.mocked(loginApi).mockResolvedValue(undefined);
+    let resolveNavigate!: () => void;
+    navigate.mockReturnValue(
+      new Promise<void>((resolve) => {
+        resolveNavigate = resolve;
+      }),
+    );
+    const user = userEvent.setup();
+    renderForm();
+
+    await user.type(screen.getByPlaceholderText("email"), "user@example.com");
+    await user.type(screen.getByPlaceholderText("password"), "password123");
+    await user.click(screen.getByRole("button", { name: "Login" }));
+
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: "/" }));
+    expect(screen.getByRole("button", { name: "Login" })).toBeDisabled();
+
+    resolveNavigate();
+  });
+
   it("maps server field errors onto the form and does not navigate", async () => {
     vi.mocked(loginApi).mockRejectedValue(
       new AxiosError("Request failed", "401", undefined, undefined, {

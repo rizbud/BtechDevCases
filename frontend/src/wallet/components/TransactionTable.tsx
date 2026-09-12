@@ -11,6 +11,8 @@ export function TransactionTable({ onSelectTransaction }: TransactionTableProps)
     transactions,
     totalPages,
     isLoading,
+    isError,
+    refetch,
     dateRange,
     setDateRange,
     page,
@@ -44,8 +46,21 @@ export function TransactionTable({ onSelectTransaction }: TransactionTableProps)
         </div>
       </div>
 
-      {isLoading ? (
-        <p>Loading...</p>
+      {isError ? (
+        <div className="flex flex-col items-start gap-2">
+          <p className="text-sm text-error">
+            Couldn't load transactions. Check your connection and try again.
+          </p>
+          <button className="btn btn-sm" onClick={() => refetch()}>
+            Retry
+          </button>
+        </div>
+      ) : isLoading ? (
+        <div className="flex flex-col gap-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="skeleton h-8 w-full" />
+          ))}
+        </div>
       ) : transactions.length === 0 ? (
         <p className="text-base-content/60">No transactions in this range.</p>
       ) : (

@@ -11,7 +11,7 @@ export function TransactionDetailModal({
   transactionId,
   onClose,
 }: TransactionDetailModalProps) {
-  const { data, isLoading } = useTransactionDetail(transactionId);
+  const { data, isLoading, isError, refetch } = useTransactionDetail(transactionId);
 
   return (
     <Modal
@@ -19,8 +19,21 @@ export function TransactionDetailModal({
       onClose={onClose}
       title="Transaction Detail"
     >
-      {isLoading || !data ? (
-        <p>Loading...</p>
+      {isError ? (
+        <div className="flex flex-col items-start gap-2">
+          <p className="text-sm text-error">
+            Couldn't load this transaction. Check your connection and try again.
+          </p>
+          <button className="btn btn-sm" onClick={() => refetch()}>
+            Retry
+          </button>
+        </div>
+      ) : isLoading || !data ? (
+        <div className="flex flex-col gap-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="skeleton h-4 w-full" />
+          ))}
+        </div>
       ) : (
         <div className="flex flex-col gap-2 text-sm">
           <div className="flex justify-between">

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
@@ -9,12 +10,15 @@ export function useLoginForm() {
   const navigate = useNavigate();
   const mutation = useLoginMutation();
   const form = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) });
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
       await mutation.mutateAsync(values);
-      navigate({ to: "/" });
+      setIsRedirecting(true);
+      await navigate({ to: "/" });
     } catch (err) {
+      setIsRedirecting(false);
       if (err instanceof AxiosError) {
         const data = err?.response?.data;
         if (data?.error && typeof data.error === "object") {
@@ -35,7 +39,7 @@ export function useLoginForm() {
   return {
     register: form.register,
     errors: form.formState.errors,
-    isSubmitting: mutation.isPending,
+    isSubmitting: mutation.isPending || isRedirecting,
     onSubmit,
   };
 }

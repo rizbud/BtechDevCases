@@ -28,9 +28,11 @@ describe("BalanceCard", () => {
       isLoading: true,
     } as ReturnType<typeof useBalanceQuery>);
 
-    render(<BalanceCard onTopUp={vi.fn()} onTransfer={vi.fn()} />);
+    const { container } = render(
+      <BalanceCard onTopUp={vi.fn()} onTransfer={vi.fn()} />,
+    );
 
-    expect(screen.getAllByText("Loading...")).toHaveLength(2);
+    expect(container.querySelectorAll(".skeleton")).toHaveLength(2);
   });
 
   it("shows the welcome message and formatted balance once loaded", () => {

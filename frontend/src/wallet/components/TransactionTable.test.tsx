@@ -13,7 +13,9 @@ const baseHookReturn = {
   totalPages: 1,
   isLoading: false,
   isFetching: false,
+  isError: false,
   error: null,
+  refetch: vi.fn(),
   dateRange: { start_date: "2026-01-01", end_date: "2026-01-31" },
   setDateRange: vi.fn(),
   page: 1,
@@ -31,9 +33,11 @@ describe("TransactionTable", () => {
       isLoading: true,
     } as ReturnType<typeof useTransactionHistory>);
 
-    render(<TransactionTable onSelectTransaction={vi.fn()} />);
+    const { container } = render(
+      <TransactionTable onSelectTransaction={vi.fn()} />,
+    );
 
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    expect(container.querySelectorAll(".skeleton").length).toBeGreaterThan(0);
   });
 
   it("shows an empty state when there are no transactions", () => {
