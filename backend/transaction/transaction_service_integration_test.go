@@ -15,7 +15,7 @@ func TestTransactionService_TopUp(t *testing.T) {
 	ctx := context.Background()
 	userID := createTestUser(t, uniqueEmail("svc-topup"))
 
-	tx, err := s.topUp(ctx, userID, 75)
+	tx, err := s.topUp(ctx, userID, 75, "")
 	if err != nil {
 		t.Fatalf("topUp() error = %v", err)
 	}
@@ -38,11 +38,11 @@ func TestTransactionService_Transfer(t *testing.T) {
 	fromID := createTestUser(t, uniqueEmail("svc-transfer-from"))
 	toID := createTestUser(t, uniqueEmail("svc-transfer-to"))
 
-	if _, err := s.topUp(ctx, fromID, 100); err != nil {
+	if _, err := s.topUp(ctx, fromID, 100, ""); err != nil {
 		t.Fatalf("topUp() error = %v", err)
 	}
 
-	if _, err := s.transfer(ctx, fromID, toID, 40); err != nil {
+	if _, err := s.transfer(ctx, fromID, toID, 40, ""); err != nil {
 		t.Fatalf("transfer() error = %v", err)
 	}
 
@@ -62,11 +62,11 @@ func TestTransactionService_Transfer_InsufficientBalance(t *testing.T) {
 	fromID := createTestUser(t, uniqueEmail("svc-insufficient-from"))
 	toID := createTestUser(t, uniqueEmail("svc-insufficient-to"))
 
-	if _, err := s.topUp(ctx, fromID, 10); err != nil {
+	if _, err := s.topUp(ctx, fromID, 10, ""); err != nil {
 		t.Fatalf("topUp() error = %v", err)
 	}
 
-	_, err := s.transfer(ctx, fromID, toID, 1000)
+	_, err := s.transfer(ctx, fromID, toID, 1000, "")
 	if err == nil {
 		t.Fatal("expected error for insufficient balance, got nil")
 	}
@@ -82,7 +82,7 @@ func TestTransactionService_Transfer_ConcurrentOverdraft(t *testing.T) {
 	toA := createTestUser(t, uniqueEmail("svc-race-to-a"))
 	toB := createTestUser(t, uniqueEmail("svc-race-to-b"))
 
-	if _, err := s.topUp(ctx, fromID, 100); err != nil {
+	if _, err := s.topUp(ctx, fromID, 100, ""); err != nil {
 		t.Fatalf("topUp() error = %v", err)
 	}
 
@@ -91,11 +91,11 @@ func TestTransactionService_Transfer_ConcurrentOverdraft(t *testing.T) {
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		_, results[0] = s.transfer(ctx, fromID, toA, 60)
+		_, results[0] = s.transfer(ctx, fromID, toA, 60, "")
 	}()
 	go func() {
 		defer wg.Done()
-		_, results[1] = s.transfer(ctx, fromID, toB, 60)
+		_, results[1] = s.transfer(ctx, fromID, toB, 60, "")
 	}()
 	wg.Wait()
 

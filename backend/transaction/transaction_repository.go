@@ -42,6 +42,7 @@ type Transaction struct {
 	RecipientID    string    `json:"recipient_id"`
 	RecipientEmail string    `json:"recipient_email"`
 	Amount         float64   `json:"amount"`
+	Notes          *string   `json:"notes"`
 	CreatedAt      time.Time `json:"created_at"`
 }
 
@@ -51,15 +52,17 @@ func (r *TransactionRepository) CreateTransaction(
 	fromUserID *string,
 	toUserID string,
 	amount float64,
+	notes string,
 ) (string, error) {
 	var transactionID string
 
 	err := db.QueryRow(
 		ctx,
-		`INSERT INTO transactions (from_user_id, to_user_id, amount) VALUES ($1, $2, $3) RETURNING id`,
+		`INSERT INTO transactions (from_user_id, to_user_id, amount, notes) VALUES ($1, $2, $3, $4) RETURNING id`,
 		fromUserID,
 		toUserID,
 		amount,
+		nullableString(notes),
 	).Scan(&transactionID)
 
 	if err != nil {
@@ -73,6 +76,13 @@ func (r *TransactionRepository) CreateTransaction(
 	}
 
 	return transactionID, nil
+}
+
+func nullableString(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }
 
 func (r *TransactionRepository) GetTransactionsByUserID(
@@ -101,7 +111,7 @@ func (r *TransactionRepository) GetTransactionsByUserID(
 	rows, err := r.DB.Query(
 		ctx,
 		`SELECT
-			t.id, COALESCE(fu.id::text, NULL), COALESCE(fu.email, NULL), tu.id::text, tu.email, t.amount, t.created_at
+			t.id, COALESCE(fu.id::text, NULL), COALESCE(fu.email, NULL), tu.id::text, tu.email, t.amount, t.notes, t.created_at
 			FROM transactions t
 			LEFT JOIN users fu ON t.from_user_id = fu.id
 			JOIN users tu ON t.to_user_id = tu.id
@@ -137,6 +147,7 @@ func (r *TransactionRepository) GetTransactionsByUserID(
 			&transaction.RecipientID,
 			&transaction.RecipientEmail,
 			&transaction.Amount,
+			&transaction.Notes,
 			&transaction.CreatedAt,
 		)
 		if err != nil {
@@ -164,7 +175,7 @@ func (r *TransactionRepository) GetTransactionByID(
 	var transaction Transaction
 	err := db.QueryRow(
 		ctx,
-		`SELECT t.id, COALESCE(fu.id::text, NULL), COALESCE(fu.email, NULL), tu.id::text, tu.email, t.amount, t.created_at
+		`SELECT t.id, COALESCE(fu.id::text, NULL), COALESCE(fu.email, NULL), tu.id::text, tu.email, t.amount, t.notes, t.created_at
 			FROM transactions t
 			LEFT JOIN users fu ON t.from_user_id = fu.id
 			JOIN users tu ON t.to_user_id = tu.id
@@ -178,6 +189,7 @@ func (r *TransactionRepository) GetTransactionByID(
 		&transaction.RecipientID,
 		&transaction.RecipientEmail,
 		&transaction.Amount,
+		&transaction.Notes,
 		&transaction.CreatedAt,
 	)
 	if err != nil {

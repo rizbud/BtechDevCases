@@ -37,7 +37,7 @@ func (s *TransactionService) validateTransferRequest(fromUserID, toUserID string
 	return validationErrors
 }
 
-func (s *TransactionService) transfer(ctx context.Context, fromUserID, toUserID string, amount float64) (Transaction, error) {
+func (s *TransactionService) transfer(ctx context.Context, fromUserID, toUserID string, amount float64, notes string) (Transaction, error) {
 	// begin a transaction
 	tx, err := s.Repository.DB.Begin(ctx)
 	if err != nil {
@@ -61,7 +61,7 @@ func (s *TransactionService) transfer(ctx context.Context, fromUserID, toUserID 
 	}
 
 	// Perform the transfer
-	transactionID, err := s.Repository.CreateTransaction(ctx, tx, &fromUserID, toUserID, amount)
+	transactionID, err := s.Repository.CreateTransaction(ctx, tx, &fromUserID, toUserID, amount, notes)
 	if err != nil {
 		return Transaction{}, err
 	}
@@ -80,7 +80,7 @@ func (s *TransactionService) transfer(ctx context.Context, fromUserID, toUserID 
 	return transaction, nil
 }
 
-func (s *TransactionService) topUp(ctx context.Context, userID string, amount float64) (Transaction, error) {
+func (s *TransactionService) topUp(ctx context.Context, userID string, amount float64, notes string) (Transaction, error) {
 	// begin a transaction
 	tx, err := s.Repository.DB.Begin(ctx)
 	if err != nil {
@@ -91,7 +91,7 @@ func (s *TransactionService) topUp(ctx context.Context, userID string, amount fl
 	defer tx.Rollback(ctx) // rollback the transaction in case of an error
 
 	// Perform the top-up
-	transactionID, err := s.Repository.CreateTransaction(ctx, tx, nil, userID, amount)
+	transactionID, err := s.Repository.CreateTransaction(ctx, tx, nil, userID, amount, notes)
 	if err != nil {
 		return Transaction{}, err
 	}

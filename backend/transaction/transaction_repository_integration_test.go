@@ -53,7 +53,7 @@ func TestTransactionRepository_TopUpAndGetByID(t *testing.T) {
 	ctx := context.Background()
 	userID := createTestUser(t, uniqueEmail("topup"))
 
-	txID, err := repo.CreateTransaction(ctx, testPool, nil, userID, 50)
+	txID, err := repo.CreateTransaction(ctx, testPool, nil, userID, 50, "top-up notes")
 	if err != nil {
 		t.Fatalf("CreateTransaction() error = %v", err)
 	}
@@ -71,12 +71,15 @@ func TestTransactionRepository_TopUpAndGetByID(t *testing.T) {
 	if tx.Amount != 50 {
 		t.Errorf("Amount = %v, want 50", tx.Amount)
 	}
+	if tx.Notes == nil || *tx.Notes != "top-up notes" {
+		t.Errorf("Notes = %v, want %q", tx.Notes, "top-up notes")
+	}
 }
 
 func TestTransactionRepository_CreateTransaction_UnknownUser(t *testing.T) {
 	repo := &TransactionRepository{DB: testPool}
 
-	_, err := repo.CreateTransaction(context.Background(), testPool, nil, uuid.NewString(), 10)
+	_, err := repo.CreateTransaction(context.Background(), testPool, nil, uuid.NewString(), 10, "")
 	if err == nil {
 		t.Fatal("expected error for a non-existent recipient, got nil")
 	}
@@ -114,11 +117,11 @@ func TestTransactionRepository_GetUserBalance(t *testing.T) {
 	ctx := context.Background()
 	userID := createTestUser(t, uniqueEmail("balance"))
 
-	if _, err := repo.CreateTransaction(ctx, testPool, nil, userID, 100); err != nil {
+	if _, err := repo.CreateTransaction(ctx, testPool, nil, userID, 100, ""); err != nil {
 		t.Fatalf("CreateTransaction() error = %v", err)
 	}
 	other := createTestUser(t, uniqueEmail("balance-other"))
-	if _, err := repo.CreateTransaction(ctx, testPool, &userID, other, 40); err != nil {
+	if _, err := repo.CreateTransaction(ctx, testPool, &userID, other, 40, ""); err != nil {
 		t.Fatalf("CreateTransaction() error = %v", err)
 	}
 
@@ -137,7 +140,7 @@ func TestTransactionRepository_GetTransactionsByUserID_Pagination(t *testing.T) 
 	userID := createTestUser(t, uniqueEmail("pagination"))
 
 	for i := 0; i < 5; i++ {
-		if _, err := repo.CreateTransaction(ctx, testPool, nil, userID, float64(i+1)); err != nil {
+		if _, err := repo.CreateTransaction(ctx, testPool, nil, userID, float64(i+1), ""); err != nil {
 			t.Fatalf("CreateTransaction() error = %v", err)
 		}
 	}

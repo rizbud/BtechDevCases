@@ -19,10 +19,12 @@ type TransactionHandler struct {
 type TransferRequest struct {
 	ToUserEmail string  `json:"to_user_email"`
 	Amount      float64 `json:"amount"`
+	Notes       string  `json:"notes"`
 }
 
 type TopUpRequest struct {
 	Amount float64 `json:"amount"`
+	Notes  string  `json:"notes"`
 }
 
 type BalanceResponse struct {
@@ -120,7 +122,7 @@ func (h *TransactionHandler) handleTransfer(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	response, err := h.TrxService.transfer(r.Context(), userID, destinationUser.ID, req.Amount)
+	response, err := h.TrxService.transfer(r.Context(), userID, destinationUser.ID, req.Amount, req.Notes)
 	if err != nil {
 		statusCode := http.StatusInternalServerError
 		message := "Failed to transfer funds"
@@ -159,7 +161,7 @@ func (h *TransactionHandler) handleTopUp(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	response, err := h.TrxService.topUp(r.Context(), userID, req.Amount)
+	response, err := h.TrxService.topUp(r.Context(), userID, req.Amount, req.Notes)
 	if err != nil {
 		statusCode := http.StatusInternalServerError
 		message := "Failed to top up funds"
