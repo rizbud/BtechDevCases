@@ -2,10 +2,18 @@ package user
 
 import (
 	"context"
+	"regexp"
 )
 
 type UserService struct {
 	Repository *UserRepository
+}
+
+func ValidateEmail(email string) bool {
+	// Only allow emails with alphanumeric characters, dots, underscores, and hyphens before the @ symbol
+	// and a valid domain name after the @ symbol.
+	pattern := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+	return regexp.MustCompile(pattern).MatchString(email)
 }
 
 func (s *UserService) GetUserByEmail(ctx context.Context, email string) (*User, error) {

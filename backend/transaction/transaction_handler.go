@@ -88,6 +88,12 @@ func (h *TransactionHandler) handleTransfer(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	if !user.ValidateEmail(req.ToUserEmail) {
+		validationErrors := map[string]string{"to_user_email": "To user email is not a valid email address"}
+		server.ErrorResponseJSON(w, http.StatusBadRequest, "Validation errors", validationErrors)
+		return
+	}
+
 	destinationUser, err := h.UserService.GetUserByEmail(r.Context(), req.ToUserEmail)
 	if err != nil {
 		statusCode := http.StatusInternalServerError

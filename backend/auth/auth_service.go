@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
-	"regexp"
 	"time"
 
 	"btech-wallet/user"
@@ -20,13 +19,6 @@ type AuthService struct {
 	JWTManager     *JWTManager
 }
 
-func (s *AuthService) validateEmail(email string) bool {
-	// Only allow emails with alphanumeric characters, dots, underscores, and hyphens before the @ symbol
-	// and a valid domain name after the @ symbol.
-	pattern := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
-	return regexp.MustCompile(pattern).MatchString(email)
-}
-
 func (s *AuthService) validatePassword(password string) bool {
 	return len(password) >= 8
 }
@@ -38,7 +30,7 @@ func (s *AuthService) validateConfirmPassword(password, confirmPassword string) 
 func (s *AuthService) validateLoginRequest(email, password string) map[string]string {
 	validationErrors := map[string]string{}
 
-	if !s.validateEmail(email) {
+	if !user.ValidateEmail(email) {
 		validationErrors["email"] = "Invalid email format"
 	}
 
