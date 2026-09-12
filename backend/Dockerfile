@@ -21,6 +21,6 @@ COPY --from=builder /out/app /app/app
 
 USER app
 
-EXPOSE 8080
+EXPOSE 3333
 
 ENTRYPOINT ["/app/app"]
