@@ -16,7 +16,7 @@ export function useTopUpForm(onSuccess: () => void) {
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
-      await mutation.mutateAsync(values.amount);
+      await mutation.mutateAsync({ amount: values.amount, notes: values.notes });
       form.reset();
       onSuccess();
     } catch (err) {

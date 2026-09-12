@@ -14,7 +14,11 @@ export function TransactionDetailModal({
   const { data, isLoading } = useTransactionDetail(transactionId);
 
   return (
-    <Modal open={transactionId !== null} onClose={onClose} title="Transaction Detail">
+    <Modal
+      open={transactionId !== null}
+      onClose={onClose}
+      title="Transaction Detail"
+    >
       {isLoading || !data ? (
         <p>Loading...</p>
       ) : (
@@ -38,6 +42,10 @@ export function TransactionDetailModal({
           <div className="flex justify-between">
             <span className="text-base-content/60">Date</span>
             <span>{formatDateTime(data.created_at)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-base-content/60">Notes</span>
+            <span>{data.notes || "-"}</span>
           </div>
         </div>
       )}

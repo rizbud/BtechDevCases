@@ -26,18 +26,22 @@ export const getTransactionApi = async (transactionId: string) => {
   return response.data;
 };
 
-export const topUpApi = async (amount: number) => {
+export const topUpApi = async (amount: number, notes?: string) => {
   const response = await api.post<{ message: string } & Transaction>(
     "/wallet/topup",
-    { amount },
+    { amount, notes },
   );
   return response.data;
 };
 
-export const transferApi = async (toUserEmail: string, amount: number) => {
+export const transferApi = async (
+  toUserEmail: string,
+  amount: number,
+  notes?: string,
+) => {
   const response = await api.post<{ message: string } & Transaction>(
     "/wallet/transfer",
-    { to_user_email: toUserEmail, amount },
+    { to_user_email: toUserEmail, amount, notes },
   );
   return response.data;
 };

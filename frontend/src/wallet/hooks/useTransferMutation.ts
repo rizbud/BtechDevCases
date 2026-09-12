@@ -4,8 +4,15 @@ import { transferApi } from "@/wallet/utils/api";
 export const useTransferMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ toUserEmail, amount }: { toUserEmail: string; amount: number }) =>
-      transferApi(toUserEmail, amount),
+    mutationFn: ({
+      toUserEmail,
+      amount,
+      notes,
+    }: {
+      toUserEmail: string;
+      amount: number;
+      notes?: string;
+    }) => transferApi(toUserEmail, amount, notes),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wallet"] });
     },

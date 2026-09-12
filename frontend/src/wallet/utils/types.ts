@@ -5,6 +5,7 @@ export interface Transaction {
   recipient_id: string;
   recipient_email: string;
   amount: number;
+  notes?: string;
   created_at: string;
 }
 

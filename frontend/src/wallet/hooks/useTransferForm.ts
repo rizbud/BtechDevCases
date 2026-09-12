@@ -19,6 +19,7 @@ export function useTransferForm(onSuccess: () => void) {
       await mutation.mutateAsync({
         toUserEmail: values.to_user_email,
         amount: values.amount,
+        notes: values.notes,
       });
       form.reset();
       onSuccess();

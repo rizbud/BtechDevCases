@@ -26,6 +26,16 @@ export function TopUpModal({ open, onClose }: TopUpModalProps) {
           )}
         </div>
 
+        <div className="flex flex-col gap-1">
+          <label className="fieldset-label">Notes (optional)</label>
+          <input
+            type="text"
+            placeholder="Add a note"
+            className="input input-bordered w-full"
+            {...register("notes")}
+          />
+        </div>
+
         {errors.root && (
           <p className="text-error text-sm">{errors.root.message}</p>
         )}
