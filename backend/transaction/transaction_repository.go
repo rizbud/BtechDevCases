@@ -68,7 +68,7 @@ func (r *TransactionRepository) GetTransactionsByUserID(
 		ctx,
 		`SELECT COUNT(*)
 			FROM transactions
-			WHERE (from_user_id = $1 OR to_user_id = $1) AND created_at BETWEEN $2 AND $3`,
+			WHERE (from_user_id = $1 OR to_user_id = $1) AND created_at >= $2 AND created_at < $3::date + INTERVAL '1 day'`,
 		userID,
 		startDate,
 		endDate,
@@ -86,7 +86,7 @@ func (r *TransactionRepository) GetTransactionsByUserID(
 			LEFT JOIN users fu ON t.from_user_id = fu.id
 			JOIN users tu ON t.to_user_id = tu.id
 			WHERE (t.from_user_id = $1 OR t.to_user_id = $1)
-			AND t.created_at BETWEEN $2 AND $3
+			AND t.created_at >= $2 AND t.created_at < $3::date + INTERVAL '1 day'
 			ORDER BY t.created_at DESC
 			OFFSET $4 LIMIT $5`,
 		userID,
