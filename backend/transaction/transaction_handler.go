@@ -1,6 +1,7 @@
 package transaction
 
 import (
+	"maps"
 	"net/http"
 
 	"btech-wallet/middleware"
@@ -140,12 +141,15 @@ func (h *TransactionHandler) handleGetTransactions(w http.ResponseWriter, r *htt
 		pageSizeStr = "10"
 	}
 
-	validationErrors, page, pageSize := h.TrxService.validateTransactionsRequest(
+	page, pageSize, validationErrors := server.ValidatePaginationRequest(r)
+
+	validateTrxErrors := h.TrxService.validateTransactionsRequest(
 		startDate,
 		endDate,
-		pageStr,
-		pageSizeStr,
 	)
+
+	maps.Copy(validationErrors, validateTrxErrors)
+
 	if len(validationErrors) > 0 {
 		server.ErrorResponseJSON(w, http.StatusBadRequest, "Validation errors", validationErrors)
 		return
@@ -164,14 +168,17 @@ func (h *TransactionHandler) handleGetTransactions(w http.ResponseWriter, r *htt
 		return
 	}
 
-	response := server.PaginationResponse[Transaction]{
-		Data:         transactions,
-		TotalRecords: totalRecords,
-		TotalPages:   (totalRecords + pageSize - 1) / pageSize,
-		CurrentPage:  page,
-		PageSize:     pageSize,
-	}
-	server.JSON(w, http.StatusOK, response)
+	totalPages := (totalRecords + pageSize - 1) / pageSize
+
+	server.PaginationResponseJSON(
+		w,
+		http.StatusOK,
+		transactions,
+		totalRecords,
+		totalPages,
+		page,
+		pageSize,
+	)
 }
 
 func (h *TransactionHandler) handleGetTransaction(w http.ResponseWriter, r *http.Request) {

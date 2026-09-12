@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strconv"
 	"time"
 )
 
@@ -109,10 +108,8 @@ func (s *TransactionService) topUp(ctx context.Context, userID string, amount fl
 
 func (s *TransactionService) validateTransactionsRequest(
 	startDateStr,
-	endDateStr,
-	pageStr,
-	pageSizeStr string,
-) (map[string]string, int, int) {
+	endDateStr string,
+) map[string]string {
 	validationErrors := map[string]string{}
 	if startDateStr == "" {
 		validationErrors["start_date"] = "Start date is required"
@@ -132,12 +129,12 @@ func (s *TransactionService) validateTransactionsRequest(
 		validationErrors["end_date"] = "Invalid end date format. Use YYYY-MM-DD"
 	}
 	if startDate.After(endDate) {
-		validationErrors["date_range"] = "Start date cannot be after end date"
+		validationErrors["end_date"] = "Start date cannot be after end date"
 	}
 
 	// max date range of 1 year
 	if endDate.Sub(startDate).Hours() > 24*365 {
-		validationErrors["date_range"] = "Date range cannot exceed 1 year"
+		validationErrors["end_date"] = "Date range cannot exceed 1 year"
 	}
 
 	// end date cannot be in the future
@@ -145,23 +142,7 @@ func (s *TransactionService) validateTransactionsRequest(
 		validationErrors["end_date"] = "End date cannot be in the future"
 	}
 
-	page, err := strconv.Atoi(pageStr)
-	if err != nil {
-		validationErrors["page"] = "Invalid page number"
-	}
-	pageSize, err := strconv.Atoi(pageSizeStr)
-	if err != nil {
-		validationErrors["page_size"] = "Invalid page size"
-	}
-
-	if page <= 0 {
-		validationErrors["page"] = "Page must be greater than zero"
-	}
-	if pageSize <= 0 {
-		validationErrors["page_size"] = "Page size must be greater than zero"
-	}
-
-	return validationErrors, page, pageSize
+	return validationErrors
 }
 
 func (s *TransactionService) getTransactionsByUserID(

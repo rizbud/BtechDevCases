@@ -45,6 +45,9 @@ func PaginationResponseJSON[T any](
 	currentPage,
 	pageSize int,
 ) {
+	if data == nil {
+		data = []T{}
+	}
 	JSON(w, statusCode, PaginationResponse[T]{
 		Data:         data,
 		TotalRecords: totalRecords,
