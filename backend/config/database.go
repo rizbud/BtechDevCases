@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"btech-wallet/migrations"
 
@@ -13,13 +14,35 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+const (
+	dbPingRetries = 10
+	dbPingDelay   = 2 * time.Second
+)
+
 func newPool(ctx context.Context, dbURL string) (*pgxpool.Pool, error) {
 	pool, err := pgxpool.New(ctx, dbURL)
 	if err != nil {
 		return nil, err
 	}
 
+	if err := waitForDB(ctx, pool); err != nil {
+		pool.Close()
+		return nil, err
+	}
+
 	return pool, nil
+}
+
+func waitForDB(ctx context.Context, pool *pgxpool.Pool) error {
+	var err error
+	for i := 1; i <= dbPingRetries; i++ {
+		if err = pool.Ping(ctx); err == nil {
+			return nil
+		}
+		log.Printf("[Config.waitForDB] Database not ready (attempt %d/%d): %v", i, dbPingRetries, err)
+		time.Sleep(dbPingDelay)
+	}
+	return fmt.Errorf("database not reachable after %d attempts: %w", dbPingRetries, err)
 }
 
 func runMigrations(pool *pgxpool.Pool) error {
